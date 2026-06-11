@@ -1,0 +1,61 @@
+name: Intercepting Communication
+description: Eavesdrop on, scan, spoof, redirect, and tamper with network traffic -- TCP/UDP sockets, host discovery, sniffing, firewalls, denial of service, raw Ethernet/IP/TCP/ARP packet crafting, and man-in-the-middle.
+challenges:
+- id: level-1
+  name: Connect
+- id: level-1a
+  name: Send
+- id: level-1b
+  name: Shutdown
+- id: level-2
+  name: Listen
+- id: level-3
+  name: Scan 1
+- id: level-4
+  name: Scan 2
+- id: level-5
+  name: Monitor 1
+- id: level-6
+  name: Monitor 2
+- id: sniff-cookie
+  name: Sniffing Cookies
+- id: level-7
+  name: Network Configuration
+- id: firewall-1
+  name: Firewall 1
+- id: firewall-2
+  name: Firewall 2
+- id: firewall-3
+  name: Firewall 3
+- id: dos-1
+  name: Denial of Service 1
+- id: dos-2
+  name: Denial of Service 2
+- id: dos-3
+  name: Denial of Service 3
+- id: level-8
+  name: Ethernet
+- id: level-9
+  name: IP
+- id: level-10
+  name: TCP
+- id: level-11
+  name: TCP Handshake
+- id: udp-1
+  name: UDP
+- id: udp-2
+  name: UDP 2
+- id: udp-spoof-host
+  name: UDP Spoofing 1
+- id: udp-spoof-host-2
+  name: UDP Spoofing 2
+- id: udp-spoof-host-3
+  name: UDP Spoofing 3
+- id: udp-spoof-host-4
+  name: UDP Spoofing 4
+- id: level-12
+  name: ARP
+- id: level-13
+  name: Intercept
+- id: level-14
+  name: Man-in-the-Middle

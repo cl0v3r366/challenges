@@ -1,0 +1,22 @@
+{%- extends "../../../common/Dockerfile.j2" -%}
+{%- block additional_packages %}{{ super() }} openssl passwd login expect{% endblock -%}
+{%- block before_setup -%}
+RUN usermod -md /home/hacker -l hacker ubuntu && groupmod -n hacker ubuntu
+{% endblock -%}
+{%- block after_setup -%}
+RUN <<'EOF'
+set -eu
+# Mirror the OLD .init: grant SUID to the account-management tools the levels
+# rely on (so the player can su/newgrp/sg into the accounts the challenge made).
+for t in /usr/sbin/useradd /usr/sbin/groupadd /usr/sbin/usermod /usr/bin/su /usr/bin/gpasswd /usr/bin/newgrp; do
+    chmod u+s "$t"
+done
+chmod 4755 /challenge/run
+{% if suid_path is defined %}
+mkdir -p /challenge/bin
+ln -sf "{{ suid_path }}" /challenge/bin/
+{% endif %}
+EOF
+{% if suid_path is defined %}ENV PATH="/challenge/bin:$PATH"
+{% endif -%}
+{%- endblock -%}

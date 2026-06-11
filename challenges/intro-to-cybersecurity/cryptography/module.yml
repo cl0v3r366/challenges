@@ -1,0 +1,73 @@
+name: Cryptography
+description: Break real cryptographic schemes -- XOR and one-time pads, AES (ECB/CBC), chosen-plaintext and padding-oracle attacks, Diffie-Hellman, RSA, hashing, and trust.
+challenges:
+- id: xor
+  name: XOR
+- id: hex
+  name: XORing Hex
+- id: ascii
+  name: XORing ASCII
+- id: strxor
+  name: XORing ASCII Strings
+- id: level-2
+  name: One-time Pad
+- id: otp-tamper
+  name: One-time Pad Tampering
+- id: level-3
+  name: Many-time Pad
+- id: level-4
+  name: AES
+- id: cpa
+  name: AES-ECB-CPA
+- id: cpa-http-hex
+  name: AES-ECB-CPA-HTTP
+- id: cpa-http
+  name: AES-ECB-CPA-HTTP (base64)
+- id: cpa-suffix
+  name: AES-ECB-CPA-Suffix
+- id: cpa-prefix
+  name: AES-ECB-CPA-Prefix
+- id: cpa-prefix-pad
+  name: AES-ECB-CPA-Prefix-2
+- id: level-5
+  name: AES-ECB-CPA-Prefix-Miniboss
+- id: cpa-http-boss
+  name: AES-ECB-CPA-Prefix-Boss
+- id: aes-cbc
+  name: AES-CBC
+- id: aes-cbc-corrupt
+  name: AES-CBC Tampering
+- id: aes-cbc-corrupt-resize
+  name: AES-CBC Resizing
+- id: aes-cbc-poa-singleblock
+  name: AES-CBC-POA-Partial-Block
+- id: aes-cbc-poa-fullblock
+  name: AES-CBC-POA-Full-Block
+- id: aes-cbc-poa
+  name: AES-CBC-POA-Multi-Block
+- id: aes-cbc-poa-enc
+  name: AES-CBC-POA-Encrypt
+- id: aes-cbc-poa-enc-nodispatch
+  name: AES-CBC-POA-Encrypt-2
+- id: level-6
+  name: DHKE
+- id: dhke-aes
+  name: DHKE-to-AES
+- id: level-7
+  name: RSA 1
+- id: level-8
+  name: RSA 2
+- id: level-11
+  name: RSA 3
+- id: level-12
+  name: RSA 4
+- id: rsa-sig
+  name: RSA Signatures
+- id: level-9
+  name: SHA 1
+- id: level-10
+  name: SHA 2
+- id: level-13
+  name: TLS 1
+- id: level-14
+  name: TLS 2

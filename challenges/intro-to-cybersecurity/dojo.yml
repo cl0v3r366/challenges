@@ -1,0 +1,18 @@
+id: intro-to-cybersecurity
+name: Intro to Cybersecurity
+type: topic
+award:
+  belt: orange
+description: |
+  Can you feel it?
+  The sun is beginning to rise on your journey of cybersecurity.
+  Armed with the fundamentals, you begin to push ever deeper into the realms of knowledge that previously eluded you.
+  Fear not: with perseverance, grit, and gumption, you will lay the groundwork for a towering mastery of security in your future.
+modules:
+- id: web-security
+- id: intercepting-communication
+- id: cryptography
+- id: access-control
+- id: reverse-engineering
+- id: binary-exploitation
+- id: integrated-security

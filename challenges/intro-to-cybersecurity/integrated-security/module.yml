@@ -1,0 +1,29 @@
+name: Integrated Security
+description: The Orange-Belt capstone -- integrate cryptography, reverse engineering, and web exploitation with binary exploitation across multi-stage challenges.
+challenges:
+- id: decrypt-overflow-ecb-w
+  name: ECB-to-Win (easy)
+- id: decrypt-overflow-ecb
+  name: ECB-to-Win (hard)
+- id: decrypt-overflow-sc-ecb-w
+  name: ECB-to-Shellcode (easy)
+- id: decrypt-overflow-sc-ecb
+  name: ECB-to-Shellcode (hard)
+- id: cimg-screenshot-sc
+  name: CIMG Screenshots
+- id: cimg-screenshot-win
+  name: CIMG Screenshots 2
+- id: web-overflow
+  name: Wily Webserver
+- id: web-overflow-client
+  name: The Watering Hole
+- id: secure-chat-1
+  name: Secure Chat 1
+- id: secure-chat-2
+  name: Secure Chat 2
+- id: secure-chat-3
+  name: Secure Chat 3
+- id: secure-chat-4
+  name: Secure Chat 4
+- id: secure-chat-5
+  name: Secure Chat 5

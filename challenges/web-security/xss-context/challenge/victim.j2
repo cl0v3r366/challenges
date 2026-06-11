@@ -1,7 +1,0 @@
-{%- extends "../../../common/victim-selenium.py.j2" -%}
-
-{% block setup %}
-  {{- super() -}}
-  {%- set challenge.specify_url = True -%}
-  {%- set challenge.reward_alert = True -%}
-{% endblock %}

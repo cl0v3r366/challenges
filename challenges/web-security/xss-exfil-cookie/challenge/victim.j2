@@ -1,9 +1,0 @@
-{%- extends "../../../common/victim-selenium.py.j2" -%}
-
-{% block setup %}
-  {{- super() -}}
-  {%- set challenge.specify_url = False -%}
-  {%- set challenge.endpoint_challenge = "" -%}
-  {%- set challenge.form_fields = {"username": '"admin"', "password": 'open("/flag").read().strip()[-20:]'} -%}
-  {%- set challenge.reward_alert = False -%}
-{% endblock %}

@@ -1,9 +1,0 @@
-{%- extends "../../../common/victim-selenium.py.j2" -%}
-
-{% block setup %}
-  {{- super() -}}
-  {%- set challenge.specify_url = False -%}
-  {%- set challenge.login_first = True -%}
-  {%- set challenge.use_partial_flag = True -%}
-  {%- set challenge.visit_attacker = True -%}
-{% endblock %}

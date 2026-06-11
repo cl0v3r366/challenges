@@ -1,0 +1,2 @@
+#!/bin/bash -e
+grep -q challenge.localhost /etc/hosts || echo "127.0.0.1 challenge.localhost hacker.localhost" >> /etc/hosts

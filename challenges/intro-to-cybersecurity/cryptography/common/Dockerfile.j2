@@ -1,0 +1,16 @@
+{%- extends "../../../common/Dockerfile.j2" -%}
+{%- block additional_packages %}{{ super() }} python3-pycryptodome python3-pexpect{% endblock -%}
+{%- block before_copy %}
+# Ubuntu's python3-pycryptodome ships the API under the `Cryptodome` namespace,
+# but the challenges (and pycryptodome upstream) import it as `Crypto`. The two
+# are API-identical, so bridge them with a symlink.
+RUN python3 -c "import Cryptodome, os; d = os.path.dirname(Cryptodome.__file__); os.symlink(d, os.path.join(os.path.dirname(d), 'Crypto'))"
+{% endblock -%}
+{%- block after_setup %}
+RUN <<'END'
+set -eu
+for f in run dispatcher worker redeem; do
+    [ -f "/challenge/$f" ] && chmod 4755 "/challenge/$f" || true
+done
+END
+{% endblock -%}
