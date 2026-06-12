@@ -1,5 +1,7 @@
 name: Cryptography
-description: Break real cryptographic schemes -- XOR and one-time pads, AES (ECB/CBC), chosen-plaintext and padding-oracle attacks, Diffie-Hellman, RSA, hashing, and trust.
+description: |
+  Solve various cryptography challenges, starting from the fundamentals and diving toward advanced concepts!
+  This module assumes that you know how to deal with [data encodings](/fundamentals/data-dealings).
 
 resources:
 - name: "Cryptography: Introduction"

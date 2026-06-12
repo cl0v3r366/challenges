@@ -1,5 +1,5 @@
 name: Intercepting Communication
-description: Eavesdrop on, scan, spoof, redirect, and tamper with network traffic -- TCP/UDP sockets, host discovery, sniffing, firewalls, denial of service, raw Ethernet/IP/TCP/ARP packet crafting, and man-in-the-middle.
+description: Learn various techniques to intercept and manipulate network communication, from connecting to remote hosts to performing man-in-the-middle attacks.
 privileged: true
 resources:
 - name: "Intercepting Communication: Introduction"

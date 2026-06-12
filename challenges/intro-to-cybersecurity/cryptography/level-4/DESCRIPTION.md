@@ -23,6 +23,8 @@ We won't learn about the internals of AES, in terms of how it actually encrypts 
 Instead, we'll learn about different _applications_ of AES, and how they break down in practice.
 If you're interested in learning about AES internals, we can highly recommend [CryptoHack](https://cryptohack.org/courses/), an amazing learning resource that focuses on the nitty gritty details of crypto!
 
+You can also explore an interactive vizualization of [AES encryption](https://dylanpindur.com/blog/padding-oracles-an-animated-primer/) which we will revist in later challenges.
+
 Now, go decrypt the flag and score!
 
 ----
