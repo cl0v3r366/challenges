@@ -1,0 +1,7 @@
+{%- set c = namespace() -%}
+{%- set c.pwnversion = "1." + ("3" * random.randrange(2, 100)) + ".7" -%}
+{%- set c.port = 80 -%}
+{%- set c.disable_aslr = true -%}
+{%- set c.drop_privs = true -%}
+{%- set walkthrough = false -%}
+{%- include "../../common/web.c.j2" -%}

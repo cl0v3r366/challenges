@@ -1,0 +1,17 @@
+{%- extends "../../../common/Dockerfile.j2" -%}
+{%- block additional_packages %}{{ super() }} build-essential libcapstone-dev python3-psutil python3-requests{% endblock -%}
+{%- block setup %}
+RUN <<'EOF'
+set -eu
+gcc -Wl,-z,relro,-z,now -no-pie -fno-stack-protector -z execstack -masm=intel -O0 -w \
+    /challenge/web.c -lcapstone -o /challenge/server
+chmod 4755 /challenge/server
+mkdir -p /challenge/files
+echo "Welcome to the pwnserver! Try GET index.txt" > /challenge/files/index.txt
+echo "the medium is the message" > /challenge/files/hacker_manifesto.txt
+# The cookie-stealing variant ships a SUID victim bot that holds the real flag.
+[ -f /challenge/victim ] && chmod 4755 /challenge/victim || true
+{% if keep_source | default(false) %}chmod 644 /challenge/web.c{% else %}rm -f /challenge/web.c{% endif %}
+rm -f /challenge/Dockerfile /challenge/.setup
+EOF
+{% endblock -%}

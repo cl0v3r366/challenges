@@ -1,3 +1,2 @@
-{% set challenge_image = "pwncollege/challenge-legacy:latest" %}
-{% set challenge_path = "intro-to-cybersecurity-dojo/integrated-security/web-overflow-client" %}
-{% include "../../common/Dockerfile.j2" %}
+{%- set keep_source = true -%}
+{%- include "../../common/web.Dockerfile.j2" -%}

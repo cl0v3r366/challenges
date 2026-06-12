@@ -1,0 +1,18 @@
+#!/usr/bin/exec-suid -- /usr/bin/python3 -I
+# A "victim" that browses the server carrying the flag in a cookie. SUID-root so
+# it can read the flag; the exploited (unprivileged) server never reads /flag
+# itself -- the flag must be stolen from this visitor's request.
+
+import sys
+
+import psutil
+import requests
+
+open_ports = {s.laddr.port for s in psutil.net_connections(kind="inet") if s.status == "LISTEN"}
+if 80 not in open_ports:
+    print("Service doesn't seem to be running?")
+    sys.exit(1)
+
+print("Visiting with a yummy cookie...")
+r = requests.get("http://localhost:80/hacker_manifesto.txt", cookies={"flag": open("/flag").read().strip()})
+print(f"... retrieved, in case it helps you debug: {r.content}")
