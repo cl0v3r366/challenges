@@ -1,0 +1,4 @@
+interface:
+  display_name: "Porting Legacy Challenges"
+  short_description: "Port pwn.college challenges to the modern style"
+  default_prompt: "Use $porting-legacy-challenges to migrate this module out of challenges/legacy/ into the modern templated format."

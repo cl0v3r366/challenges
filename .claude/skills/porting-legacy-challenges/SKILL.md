@@ -1,26 +1,19 @@
 ---
 name: porting-legacy-challenges
 description: >-
-  Port pwn.college challenges/modules from the legacy / OLD pwnshop engine to this repo's
-  modern templated style. Use when migrating a module out of `challenges/legacy/`,
-  converting OLD pwnshop `Challenge` classes + Jinja templates into modern
-  `challenge/` + `tests_private/` templates, or reproducing a legacy challenge as a
-  build-time-compiled SUID template with a deterministic solver. Encodes hard-won
-  mechanics: keep the challenge IDENTICAL (only seed-derived variants may differ); the
-  seeded-determinism pattern that keeps a challenge body and its solver in lock-step;
-  the Jinja/pwnshop gotchas (shebang trimming, include-vs-import context, dynamic
-  imports, no trim_blocks); validating the shared "linchpin" templates before fan-out;
-  extracting assets from the legacy image; and git-crypt encryption of tests_private.
-  ALSO covers converting legacy-IMAGE re-home wrappers (`challenge-legacy` /
-  `challenge-secure-chat`) into native in-repo builds: the false "privileged netns can't
-  run under the harness" blocker (it runs under the kata runtime); re-creating env the base
-  image provided ambiently (SHELL=bash, iptables-legacy backend, tcpdump `-Z root`,
-  `challenge.localhost` hosts, workspace tools); spotting fake-pass replica solvers
-  (passed != solved); debugging native binaries locally with gdb instead of the 10-min
-  Docker loop; gcc `-O0` frame-layout drift and the noinline-helper fix; deriving solver
-  addresses from the binary instead of hardcoding; and rewriting source-less challenges
-  from scratch. Complements the `authoring-challenges` skill (read that too for archetype
-  mechanics).
+  Port pwn.college challenges/modules from the legacy/OLD pwnshop engine to this
+  repo's modern templated style, or audit such a port ("does this PR properly port
+  X?"). Use when migrating a module out of `challenges/legacy/`, converting OLD
+  pwnshop `Challenge` classes + Jinja templates into modern `challenge/` +
+  `tests_private/` templates, reproducing a legacy challenge as a build-time-compiled
+  SUID template + deterministic solver, or converting legacy-IMAGE re-home wrappers
+  into native in-repo builds. Covers hard-won mechanics: keep the challenge IDENTICAL
+  (only seed-derived variants differ); the seeded-determinism pattern linking body
+  and solver; Jinja/pwnshop gotchas; validating linchpin templates before fan-out;
+  git-crypt-encrypting tests_private; module/dojo wiring (module.yml, interleaved
+  `resources:`, per-challenge DESCRIPTION.md); making tests_public verify real
+  functionality; fake-pass detection (passed != solved); flaky/timing-test
+  reliability; local gdb debugging. Complements `authoring-challenges`.
 ---
 
 # Porting legacy challenges to the modern style
@@ -318,3 +311,92 @@ rebuild is for fast pure-exploit-logic iteration with no container at all.
   the copy/overflow loop into a **`noinline` helper taking the bounds BY VALUE** so a
   caller-frame overflow can't perturb the loop's own locals, and do any post-overflow stores
   BEFORE the overflow using the still-clean record.
+
+## 12. Port the whole module, not just the challenges (dojo wiring + learner text)
+
+A "port" that compiles every binary but drops the curriculum scaffolding is incomplete. Each
+of these recurred as a **blocking audit finding** — a green `pwnshop test` does not catch them:
+
+- **A module needs its own `module.yml` or it renders EMPTY.** `dojo.yml` only *lists* module
+  ids; `tools/dojo/parse-dojo-yml … --json` reads each module's `module.yml` for its contents,
+  and a missing one parses as **zero levels** — every challenge silently vanishes from the dojo
+  even though the dirs exist and test green. After wiring, run the parser and confirm the level
+  count for each module.
+- **`module.yml` carries the lectures/headers/markdown too, not just the challenge list.**
+  Transcribe the OLD module's `resources:` (lecture video/slides ids, `type: header` section
+  titles, prose) — dropping them loses the teaching material the port is supposed to preserve.
+- **Interleave everything in ONE ordered `resources:` list.** The parser concatenates *all*
+  `resources:` entries, *then* all `challenges:` entries (`parse-dojo-yml` ~268–312), so
+  splitting headers into `resources:` and levels into a separate `challenges:` key bunches every
+  header at the top, detached from the challenges it was meant to precede. Put lectures, headers,
+  **and** challenges (as `type: challenge` entries with an `id`) all in the single `resources:`
+  list, in display order. `cryptography/module.yml` and `web-security/module.yml` show the shape.
+- **Descriptions fall back to `DESCRIPTION.md`.** If a `type: challenge` resource has no inline
+  `description`, the parser fills it from that challenge's `DESCRIPTION.md`; the module's own
+  `description` falls back to the module-level `DESCRIPTION.md` (`parse-dojo-yml` ~284, ~306,
+  ~317). So a module with a module-level DESCRIPTION.md can omit `description:`, and per-challenge
+  entries can omit it as long as each leaf ships its own `DESCRIPTION.md`.
+- **Port every per-challenge `DESCRIPTION.md` byte-for-byte.** These are trivially forgotten —
+  one pass shipped 21 binary-exploitation levels + `cryptography/xor` with none. Diff the ported
+  text against OLD; they must match (only seed-derived variants may differ, and descriptions are
+  not seeded).
+- **Moving a module changes its path everywhere.** Relocating a top-level module under a dojo dir
+  (e.g. `web-security/` → `intro-to-cybersecurity/web-security/`) breaks both `../../common`
+  relative paths inside its templates *and* stale example paths in `README.md` / `docs/` /
+  `AGENTS.md` / `CLAUDE.md`. Grep for the old path and fix both.
+
+## 13. Public tests must verify functionality, not just `ls`
+
+`tests_public/` is the no-flag smoke test, but a stub that only `ls /challenge` proves nothing
+and is itself a blocking audit finding. Drive the actual program and assert on real output. Two
+output-capture gotchas that bit real ports:
+
+- **Binary stdout breaks pwnshop's capture.** pwnshop captures test output as UTF-8; a program
+  that emits raw bytes (e.g. a 32-byte ECB ciphertext from a `dispatch` oracle) corrupts the
+  stream and fails the test for the wrong reason. Redirect the binary output to a **file** and
+  read it back — don't let raw bytes hit captured stdout.
+- **A fragile server dies on a connect-then-close poll.** A C server that double-writes its error
+  path and never `signal(SIGPIPE, SIG_IGN)`s is *killed* by a bare `connect()`-then-close
+  readiness probe (the close triggers SIGPIPE mid-write). Wait for readiness by retrying a **real
+  request** (a full GET that you read a response to), and expect a post-response RST.
+
+## 14. Auditing a port — review the whole thing, not just that tests pass
+
+When asked "does this PR properly port X?", check **completeness**, because green tests miss most
+of the gaps above. The dimensions real audits flagged, as a checklist:
+
+1. **Coverage:** challenge-dir count matches the OLD set; every dir has `challenge/Dockerfile.j2`.
+2. **Wiring:** every module in `dojo.yml` has a `module.yml`; `tools/dojo/parse-dojo-yml … --json`
+   shows the expected level count; `resources:` preserves the OLD lectures/headers (§12).
+3. **Learner text:** each challenge has its OLD `DESCRIPTION.md` (byte-diff vs `OLD/`).
+4. **Private tests really solve, not just exit 0:** `nix develop -c pwnshop test --require-solved
+   <chal>`. pwnshop tracks `passed` (exit 0) separately from `solved` (the real random `/flag`
+   appeared in output), so a fake/replica test that prints a dummy flag *passes* yet
+   `--require-solved` reports it **unsolved** (§5, §9). This is how you catch fake-pass tests.
+5. **Public tests really verify** functionality, not a placeholder `ls` (§13).
+6. **Encryption:** `tests_private` blobs are git-crypt-encrypted in the index (`git cat-file -p
+   :<test>` starts with `\x00GITCRYPT`).
+7. **Seed-robustness:** re-run a sample with `CHALLENGE_SEED=42`.
+
+Lead the review with the verdict (no / not-fully / yes) and the **blocking** findings first; list
+positives after. Review the **committed PR state**, and note if you also checked the dirty tree.
+
+## 15. Flaky / timing-dependent tests
+
+- **One green run is not a fix.** Prove a flake is gone by *looping* the test (`for i in 1 2 3; do
+  nix develop -c pwnshop test … ; done`) or `pwnshop test --attempts N` — a single pass is noise.
+- **`--attempts N` is the robust mitigation when the variance is per-container-instance.** A
+  DoS / resource-exhaustion solve's success can hinge on that kata VM instance's core count and
+  sysctls (e.g. `nproc=1` + `tcp_syncookies=1`), so *in-container* retries can't escape a bad
+  instance — but a fresh container (the next attempt) can. Each attempt gets a new container.
+  Never fake the flag to dodge the flake; the test must still only pass on the real `/flag`.
+- **Don't tune timing solves on the host.** A many-core host (even `taskset -c 0`) mispredicts the
+  kata 1-core VM by ~2×; validate timing-sensitive solves **only in-container**, and accept that
+  local experiments only narrow the search.
+- **dojjail netns bring-up races (~15%)** and crashes fast — wrap a real `/challenge/run`-driving
+  solve in a bounded retry loop so a startup race re-attempts instead of failing the test.
+- **`%`-format collision in generated helper scripts.** When an outer template/string interpolates
+  a generated Python helper (`helper % constants`, or an f-string/`%`-built blob), the *helper's
+  own* `%d`/`%s` operators get consumed by the outer `%` and explode at render time. Escape them
+  as `%%`, or build the outer layer with `str.format()` + named `{placeholders}` so the inner `%`
+  formatting survives intact.
