@@ -1,0 +1,147 @@
+{#- Faithful transcription of OLD pwncollege_modules/toddlerzero/decrypt_overflow.c,
+    with base/base.c's win()/disable_aslr/main() inlined (print_greeting=False,
+    constant_goodbye=False, vbuf_in_main=True, win_variable=False).  `challenge.X`
+    -> `c.X`; the leaf builds `c` then {% include %}s this file.
+
+    The binary decrypts an attacker-supplied AES-128-ECB ciphertext into a fixed
+    `struct { header[8]; length; message[N]; }`; the message decrypt overflows the
+    N-byte buffer (N is seed-derived).  win-variant has win(); shellcode-variant
+    has an executable stack and disabled ASLR instead. -#}
+#define _GNU_SOURCE 1
+
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <string.h>
+#include <time.h>
+#include <errno.h>
+#include <assert.h>
+#include <libgen.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <sys/prctl.h>
+#include <sys/personality.h>
+#include <openssl/evp.h>
+
+{% if walkthrough | default(false) %}
+{% include "stack_recon.c" %}
+{% if not c.win_function %}
+{% include "disassemble.c" %}
+{% endif %}
+{% endif %}
+
+{% if c.disable_aslr %}
+void __attribute__((constructor)) disable_aslr(int argc, char **argv, char **envp)
+{
+    int current_personality = personality(0xffffffff);
+    assert(current_personality != -1);
+    if ((current_personality & ADDR_NO_RANDOMIZE) == 0) {
+        assert(personality(current_personality | ADDR_NO_RANDOMIZE) != -1);
+        assert(prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) != -1);
+        execve("/proc/self/exe", argv, envp);
+    }
+}
+{% endif %}
+
+{% if c.win_function %}
+void win()
+{
+    static char flag[256];
+    static int flag_fd;
+    static int flag_length;
+
+    flag_fd = open("/flag", 0);
+    if (flag_fd < 0) {
+        printf("\n  ERROR: Failed to open the flag -- %s!\n", strerror(errno));
+        if (geteuid() != 0) {
+            printf("  Your effective user id is not 0!\n");
+            printf("  You must directly run the suid binary in order to have the correct permissions!\n");
+        }
+        exit(-1);
+    }
+    flag_length = read(flag_fd, flag, sizeof(flag));
+    if (flag_length <= 0) {
+        printf("\n  ERROR: Failed to read the flag -- %s!\n", strerror(errno));
+        exit(-1);
+    }
+    write(1, flag, flag_length);
+    printf("\n\n");
+}
+{% endif %}
+
+EVP_CIPHER_CTX *ctx;
+
+int challenge(int argc, char **argv, char **envp)
+{
+    unsigned char key[16];
+    struct {
+        char header[8];
+        unsigned long long length;
+        char message[{{ c.message_buffer_length }}];
+    } plaintext = {0};
+
+    // initialize the cipher
+    int key_file = open("/challenge/.key", O_RDONLY);
+    assert(key_file);
+    assert(read(key_file, key, 16) == 16);
+    ctx = EVP_CIPHER_CTX_new();
+    EVP_DecryptInit_ex(ctx, EVP_aes_128_ecb(), NULL, key, NULL);
+    close(key_file);
+
+    char *ciphertext = malloc(0x1000);
+    size_t ciphertext_len = read(0, ciphertext, 0x1000);
+    assert(ciphertext_len % 16 == 0);  // should be padded
+    assert(ciphertext_len >= 16);      // at least one block
+
+    // first, we verify the first block
+    int decrypted_len;
+    EVP_CIPHER_CTX_set_padding(ctx, 0);  // disable padding for the first block
+    EVP_DecryptUpdate(ctx, (char *)&plaintext, &decrypted_len, ciphertext, 16);
+
+    {% if walkthrough | default(false) %}
+    fprintf(stderr, "Your message header: %8s\n", plaintext.header);
+    fprintf(stderr, "Your message length: %llu\n", plaintext.length);
+    {% endif %}
+    assert(memcmp(plaintext.header, "VERIFIED", 8) == 0); // verify header
+    assert(plaintext.length <= 16); // verify length
+
+    // decrypt the message!
+    ctx = EVP_CIPHER_CTX_new();
+    EVP_DecryptInit_ex(ctx, EVP_aes_128_ecb(), NULL, key, NULL);
+    memset(key, 0, sizeof(key));
+    EVP_DecryptUpdate(ctx, plaintext.message, &decrypted_len, ciphertext + 16, ciphertext_len - 16);
+    EVP_DecryptFinal_ex(ctx, plaintext.message + decrypted_len, &decrypted_len);
+
+    printf("Decrypted message: %s!\n", plaintext.message);
+
+    {% if walkthrough | default(false) %}
+    {% if not c.win_function %}
+    fprintf(stderr, "You've loaded the following shellcode into your message:\n");
+    print_disassembly(plaintext.message, decrypted_len);
+    fprintf(stderr, "\n");
+    {% endif %}
+
+    GET_FRAME_WORDS(sz_, sp_, bp_, rp_);
+    DUMP_STACK(sp_, sz_);
+    fprintf(stderr, "The program's memory status:\n");
+    fprintf(stderr, "- the input buffer starts at %p\n", plaintext.message);
+    fprintf(stderr, "- the saved return address (previously to main) is at %p\n", rp_);
+    {% if c.win_function %}
+    fprintf(stderr, "- the address of win() is %p.\n", win);
+    {% endif %}
+    {% endif %}
+
+    return 0;
+}
+
+int main(int argc, char **argv, char **envp)
+{
+    setvbuf(stdin, NULL, _IONBF, 0);
+    setvbuf(stdout, NULL, _IONBF, 0);
+
+    challenge(argc, argv, envp);
+}

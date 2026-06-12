@@ -1,0 +1,28 @@
+{%- extends "../../../common/Dockerfile.j2" -%}
+{%- block additional_packages %}{{ super() }} build-essential libssl-dev libcapstone-dev python3-pycryptodome{% endblock -%}
+{%- block before_copy %}
+# Ubuntu's python3-pycryptodome ships the API under the `Cryptodome` namespace,
+# but dispatch.py imports it as `Crypto`; bridge them with a symlink.
+RUN python3 -c "import Cryptodome, os; d = os.path.dirname(Cryptodome.__file__); os.symlink(d, os.path.join(os.path.dirname(d), 'Crypto'))"
+{% endblock -%}
+{%- block setup %}
+RUN <<'EOF'
+set -eu
+gcc -Wl,-z,relro,-z,now -no-pie -fno-stack-protector {% if execstack | default(false) %}-z execstack {% endif %}-masm=intel -O0 -w \
+    /challenge/decrypt_overflow.c -lcrypto -lssl -lcapstone -o /challenge/vulnerable-overflow
+chmod 4755 /challenge/vulnerable-overflow
+chmod 4755 /challenge/dispatch
+{% if keep_source | default(false) %}chmod 644 /challenge/decrypt_overflow.c{% else %}rm -f /challenge/decrypt_overflow.c{% endif %}
+rm -f /challenge/Dockerfile /challenge/.setup
+EOF
+# The secret AES key is generated per-container at startup (not baked into the
+# image), root-owned 0400 so only the SUID dispatch/vulnerable binaries read it.
+COPY --chmod=755 <<'EOF' /challenge/.init
+#!/bin/sh
+if [ ! -f /challenge/.key ]; then
+    dd if=/dev/urandom of=/challenge/.key bs=16 count=1 2>/dev/null
+    chmod 400 /challenge/.key
+fi
+rm -f /challenge/.init
+EOF
+{% endblock -%}

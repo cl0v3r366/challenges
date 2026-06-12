@@ -1,0 +1,6 @@
+{%- set c = namespace() -%}
+{%- set c.message_buffer_length = random.randrange(16, 64) -%}
+{%- set c.win_function = false -%}
+{%- set c.disable_aslr = true -%}
+{%- set walkthrough = true -%}
+{%- include "../../common/decrypt_overflow.c.j2" -%}
