@@ -14,6 +14,14 @@ copy-paste recipes are in the **`authoring-challenges` skill**
 challenge, level, module, or dojo. Behavioral rules below are universal; mechanics adapt
 per archetype (templated web/service, interpreted checker, compiled SUID binary, legacy).
 
+**Keep the Claude and Codex skills in sync.** Each skill lives once in
+`.claude/skills/<name>/`; a project-local `.codex/skills/<name>` symlink points back to it
+(`ln -s ../../.claude/skills/<name> .codex/skills/<name>`) so Claude Code and Codex load the
+same files — edit the skill in `.claude/skills/` and both stay current automatically. When
+adding a new skill, create that relative symlink and an `agents/openai.yaml` (Codex skill
+chip). One gotcha: Codex **silently skips** any skill whose `SKILL.md` `description:` exceeds
+**1024 characters** (Claude has no such cap), so keep the description under that limit.
+
 - **Orient first.** Identify the archetype and **extend the module's `common/` templates
   instead of hand-rolling** (flask/cmdi/sqli, `common/check`, `secret-value-checker.py`,
   `Dockerfile.j2`). Put new levels in the active module (not `challenges/legacy/`). Read
