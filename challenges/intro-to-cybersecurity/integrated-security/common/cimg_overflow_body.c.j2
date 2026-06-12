@@ -111,6 +111,15 @@ void read_exact(int fd, void *dst, int size, char *msg)
     {% endif %}
 }
 
+{% if c.bin_padding %}
+// Shift win() to a fixed address whose low two bytes are printable, so the
+// ASCII-only screenshot overflow can target it with a two-byte partial overwrite.
+void __attribute__((used)) bin_padding()
+{
+    asm volatile (".rept {{ c.bin_padding }}; nop; .endr");
+}
+{% endif %}
+
 {% if c.win %}
 void win()
 {
