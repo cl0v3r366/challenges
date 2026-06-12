@@ -1,0 +1,6 @@
+{%- set c = namespace() -%}
+{%- set c.level = 3 -%}
+{%- set c.nick_size = random.randrange(16, 64) -%}
+{%- set c.win_function = true -%}
+{%- set c.disable_aslr = false -%}
+{%- include "../../common/chat.c.j2" -%}

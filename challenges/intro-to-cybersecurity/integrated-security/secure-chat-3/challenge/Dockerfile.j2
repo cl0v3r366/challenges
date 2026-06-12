@@ -1,3 +1,2 @@
-{% set challenge_image = "pwncollege/challenge-secure-chat-3" %}
-{% set challenge_path = "intro-to-cybersecurity-dojo/integrated-security/secure-chat-3" %}
-{% include "../../common/Dockerfile.j2" %}
+{%- set execstack = false -%}{%- set keep_source = false -%}
+{%- include "../../common/chat_pwn.Dockerfile.j2" -%}
