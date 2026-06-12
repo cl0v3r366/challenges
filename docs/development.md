@@ -31,7 +31,7 @@ Then use `pwnshop` for all workflows:
 
 ```bash
 ./pwnshop list
-./pwnshop test web-security/path-traversal-1
+./pwnshop test challenges/intro-to-cybersecurity/web-security/path-traversal-1
 ```
 
 ## Troubleshooting

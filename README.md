@@ -36,7 +36,7 @@ All developer workflows now run through the `./pwnshop` command. The legacy `./b
 
 The CLI is implemented with Click and Rich (`tools/pwnshop/src/pwnshop/commands/*.py`) on top of the core helper library in `tools/pwnshop/src/pwnshop/lib/__init__.py`. Keeping formatting/terminal logic in the commands and reusable challenge logic in `tools/pwnshop/src/pwnshop/lib` makes it easy to add or modify commands without duplicating functionality.
 
-All CLI subcommands accept either a direct filesystem path or a challenge slug. Slugs must include the module (e.g., `web-security/path-traversal-1`); the tool searches under `./challenges` for that module/challenge pair and errors if nothing matches.
+All CLI subcommands accept a direct filesystem path to a challenge or a directory containing challenges (e.g., `challenges/intro-to-cybersecurity/web-security/path-traversal-1`).
 
 Primary entry points:
 
@@ -134,16 +134,16 @@ pip install black click jinja2 pyastyle pwntools rich
 
 ```bash
 # run the full test suite for a challenge
-./pwnshop test web-security/path-traversal-1
+./pwnshop test challenges/intro-to-cybersecurity/web-security/path-traversal-1
 
 # build the Docker image without testing
-./pwnshop build web-security/path-traversal-1
+./pwnshop build challenges/intro-to-cybersecurity/web-security/path-traversal-1
 
 # render the challenge into a directory for inspection
-./pwnshop render web-security/path-traversal-1 --output /tmp/output
+./pwnshop render challenges/intro-to-cybersecurity/web-security/path-traversal-1 --output /tmp/output
 
 # render a single template file to stdout (or write to a file)
-./pwnshop render web-security/path-traversal-1/tests_public/test_normal.py.j2 --output /tmp/output-file
+./pwnshop render challenges/intro-to-cybersecurity/web-security/path-traversal-1/tests_public/test_normal.py.j2 --output /tmp/output-file
 
 # list challenges, optionally filtered by git history
 ./pwnshop list --modified-since origin/main

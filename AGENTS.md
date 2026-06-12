@@ -81,7 +81,7 @@ per archetype (templated web/service, interpreted checker, compiled SUID binary,
 
 ```bash
 nix develop
-pwnshop test challenges/web-security/path-traversal-1
+pwnshop test challenges/intro-to-cybersecurity/web-security/path-traversal-1
 ```
 
 The dev shell starts a project-local `dockerd` (see `runtime/`) and exports `DOCKER_HOST` at it. That daemon ships with a patched seccomp profile (`runtime/seccomp.nix`) that allows extra `personality()` values including `ADDR_NO_RANDOMIZE` and `READ_IMPLIES_EXEC` -- challenges that disable ASLR via `personality()` rely on this. Outside the dev shell, `pwnshop` silently falls through to the host `dockerd` with stock moby seccomp, and those challenges fail with `personality: Operation not permitted`. Do not "fix" that EPERM by patching pwnshop; enter `nix develop`.
@@ -92,7 +92,7 @@ Requirements for `nix develop`: Linux (`x86_64-linux`), `systemd`, `sudo`, and N
 
 All workflows run through the `pwnshop` CLI (implemented in `tools/pwnshop/src/pwnshop/commands` and backed by shared helpers in `tools/pwnshop/src/pwnshop/lib`).
 
-Each subcommand accepts either a direct path or a challenge slug (e.g., `challenge/web-security/path-traversal-1`). Slugs must contain the base path to all challenges ("challenge"), then the module and challenge.
+Each subcommand accepts a direct filesystem path to a challenge or a directory containing challenges (e.g., `challenges/intro-to-cybersecurity/web-security/path-traversal-1`).
 
 Primary commands:
 
@@ -101,7 +101,7 @@ Primary commands:
 pwnshop test challenges/MODULE_ID/CHALLENGE_ID
 
 # Example: Test path-traversal-1
-pwnshop test challenges/web-security/path-traversal-1
+pwnshop test challenges/intro-to-cybersecurity/web-security/path-traversal-1
 
 # Render a single template file for debugging
 pwnshop render challenges/MODULE_ID/CHALLENGE_ID/path/to/file.j2 --output /tmp/rendered-file
@@ -113,7 +113,7 @@ pwnshop build challenges/MODULE_ID/CHALLENGE_ID
 pwnshop list --modified-since origin/main
 
 # Drop into an interactive shell (use --user/--volume, or append a command)
-pwnshop run --user 0 --volume /tmp/debug challenges/web-security/path-traversal-1 /bin/ls -la /challenge
+pwnshop run --user 0 --volume /tmp/debug challenges/intro-to-cybersecurity/web-security/path-traversal-1 /bin/ls -la /challenge
 ```
 
 DO NOT run these scripts without pwnshop: the dependencies are not installed in the host, and some of these challenges do permanent damage to their environment.
