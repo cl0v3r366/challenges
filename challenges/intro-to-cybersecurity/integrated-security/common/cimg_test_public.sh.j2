@@ -1,0 +1,13 @@
+#!/bin/sh -e
+# Functionality smoke test for the cIMG screenshot renderer (/challenge/cimg).
+# Feed a bogus header on stdin (first byte != the 'cIMG' magic): the renderer must
+# reject it with its magic-number complaint and exit non-zero before doing anything.
+# This exercises the real entry point without solving the overflow, and asserts the
+# flag is never leaked on this benign path.
+out=$(printf 'XXXX________________________________________' | /challenge/cimg 2>&1 || true)
+printf '%s\n' "$out"
+printf '%s' "$out" | grep -qi "magic"
+if printf '%s' "$out" | grep -q "pwn.college{"; then
+    echo "FAIL: flag leaked on invalid input"
+    exit 1
+fi

@@ -3,20 +3,28 @@ description: The Orange-Belt capstone -- integrate cryptography, reverse enginee
 challenges:
 - id: decrypt-overflow-ecb-w
   name: ECB-to-Win (easy)
+  description: "Concepts used: Cryptography + Binary Exploitation"
 - id: decrypt-overflow-ecb
   name: ECB-to-Win (hard)
+  description: "Concepts used: Cryptography + Binary Exploitation"
 - id: decrypt-overflow-sc-ecb-w
   name: ECB-to-Shellcode (easy)
+  description: "Concepts used: Cryptography + Binary Exploitation"
 - id: decrypt-overflow-sc-ecb
   name: ECB-to-Shellcode (hard)
+  description: "Concepts used: Cryptography + Binary Exploitation"
 - id: cimg-screenshot-sc
   name: CIMG Screenshots
+  description: "Concepts used: Reverse Engineering + Binary Exploitation"
 - id: cimg-screenshot-win
   name: CIMG Screenshots 2
+  description: "Concepts used: Reverse Engineering + Binary Exploitation"
 - id: web-overflow
   name: Wily Webserver
+  description: "Concepts used: Web Security + Binary Exploitation"
 - id: web-overflow-client
   name: The Watering Hole
+  description: "Concepts used: Web Security + Binary Exploitation"
 - id: secure-chat-1
   name: Secure Chat 1
 - id: secure-chat-2

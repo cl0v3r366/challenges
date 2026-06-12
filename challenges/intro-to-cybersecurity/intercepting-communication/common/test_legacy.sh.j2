@@ -1,15 +1,49 @@
 #!/bin/sh
-set -eu
+# Functionality smoke test for the dojjail intercepting-communication challenges.
+#
+# `/challenge/run` is a SUID dojjail program that builds a Linux network-namespace
+# network and drops the user into an interactive shell on the user host
+# `ip-10-0-0-1` (IP 10.0.0.1). We verify THAT comes up — without solving anything
+# (we never contact the 10.0.0.2 peer) and without referencing the flag.
+#
+# `/challenge/run` is interactive and inspects its parent process with psutil, so it
+# needs a real PTY; we run it under `script` exactly like the private solve harness
+# (`tests_private/test_solve.py`), feeding the probe commands on stdin and forcing
+# SHELL=/bin/bash (dojjail's interactive() spawns $SHELL).
+set -u
 
-if [ -r /challenge ] && [ -x /challenge ]; then
-    entries=$(ls -A /challenge 2>/dev/null)
-    if [ -z "$entries" ]; then
-        echo "No challenge files found" >&2
-        exit 1
+# Commands fed to the in-namespace shell:
+#   - `ip -o -4 addr show` prints the user host's interface -> emits 10.0.0.1
+#   - `hostname` prints the dojjail user-host name -> emits ip-10-0-0-1
+#   - `echo PUBTEST_OK` proves the interactive shell executed our input
+probe='ip -o -4 addr show 2>/dev/null
+hostname
+echo PUBTEST_OK
+exit
+'
+
+out=''
+# The dojjail netns bring-up occasionally races and crashes /challenge/run on
+# startup; retry a few times before declaring failure.
+attempt=1
+while [ "$attempt" -le 4 ]; do
+    out=$(printf '%s' "$probe" | SHELL=/bin/bash timeout 45 script -q -c /challenge/run /dev/null 2>&1)
+
+    if printf '%s' "$out" | grep -q '10\.0\.0\.1' \
+        && printf '%s' "$out" | grep -q 'ip-10-0-0-1' \
+        && printf '%s' "$out" | grep -q 'PUBTEST_OK'; then
+        # Defense in depth: this benign path must never surface the flag.
+        if printf '%s' "$out" | grep -q 'pwn.college{'; then
+            echo "FAIL: flag leaked on benign startup path" >&2
+            exit 1
+        fi
+        echo "PUBTEST_OK: user host ip-10-0-0-1 (10.0.0.1) came up"
+        exit 0
     fi
-    echo "Challenge files:"
-    printf '%s\n' "$entries"
-else
-    # Some legacy challenges make /challenge inaccessible (e.g. legacy/linux-luminarium/processes/ps)
-    echo "Challenge files are inaccessible"
-fi
+
+    attempt=$((attempt + 1))
+done
+
+echo "FAIL: user host ip-10-0-0-1 (10.0.0.1) did not come up after retries" >&2
+printf '%s\n' "$out" >&2
+exit 1
