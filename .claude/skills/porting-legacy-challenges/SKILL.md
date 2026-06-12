@@ -11,7 +11,16 @@ description: >-
   the Jinja/pwnshop gotchas (shebang trimming, include-vs-import context, dynamic
   imports, no trim_blocks); validating the shared "linchpin" templates before fan-out;
   extracting assets from the legacy image; and git-crypt encryption of tests_private.
-  Complements the `authoring-challenges` skill (read that too for archetype mechanics).
+  ALSO covers converting legacy-IMAGE re-home wrappers (`challenge-legacy` /
+  `challenge-secure-chat`) into native in-repo builds: the false "privileged netns can't
+  run under the harness" blocker (it runs under the kata runtime); re-creating env the base
+  image provided ambiently (SHELL=bash, iptables-legacy backend, tcpdump `-Z root`,
+  `challenge.localhost` hosts, workspace tools); spotting fake-pass replica solvers
+  (passed != solved); debugging native binaries locally with gdb instead of the 10-min
+  Docker loop; gcc `-O0` frame-layout drift and the noinline-helper fix; deriving solver
+  addresses from the binary instead of hardcoding; and rewriting source-less challenges
+  from scratch. Complements the `authoring-challenges` skill (read that too for archetype
+  mechanics).
 ---
 
 # Porting legacy challenges to the modern style
@@ -203,3 +212,109 @@ existing module's exactly.
   the (already-green) Docker result is unchanged, no re-run needed for the unchanged paths.
 - Commit only when asked; on an unpushed WIP branch, `--amend` obvious fixes into the single
   module commit rather than stacking commits.
+
+## 9. Re-homing → native: porting a legacy-IMAGE module
+
+Some modules under `challenges/<dojo>/<module>/` are NOT OLD-engine ports — each leaf is a
+thin **re-home** wrapper: `{% set challenge_image = "pwncollege/challenge-legacy:latest" %}
+{% set challenge_path = "<dojo>/<module>/<id>" %}{% include "../../common/Dockerfile.j2" %}`
+that pulls a prebuilt image and fetches the upstream dojo source at build time. Converting
+these to native (source built in-repo) follows the cardinal rule (ship the OLD `run`/`.init`
+**byte-for-byte**) plus:
+
+- **Distrust the re-home's stated blocker.** "Privileged netns can't run under the test
+  harness" is FALSE — pwnshop runs `privileged: true` challenges under the **kata runtime**
+  with `--cap-add=SYS_ADMIN --cap-add=NET_ADMIN` (`lib/__init__.py` ~94–108), so dojjail/netns
+  challenges run. A re-home test can also be a **fake pass**: pwnshop tracks `passed =
+  returncode==0` SEPARATELY from `solved = flag in last_output` (`commands/test.py`), so an
+  in-process replica hardcoding `pwn.college{dummyflag}` exits 0 yet never produces the real
+  random `/flag` (watch the "Warning: unsolved challenges" line; use `--require-solved`).
+  Replace replica solvers with real ones that drive `/challenge/run` and capture the real flag.
+- **The OLD module Dockerfile IS the native recipe.** `OLD/<dojo>/<module>/Dockerfile` gives the
+  exact base+apt+pip (e.g. `FROM python:3.13-slim`; `pip install … <dojjail github-zip> <scapy
+  github-zip>`; `ADD …/exec-suid`). Mirror it in a module `common/Dockerfile.j2`, **add the
+  uid-1000 `hacker` account** the harness execs as, and ship the OLD `run` (shebang
+  `#!/usr/bin/exec-suid …`) + a `.init` (chmod 6755 the run; `touch /run/xtables.lock`). pwnshop
+  runs `/challenge/.init` at container start unconditionally — works from any base image.
+- **Re-create what the legacy image provided ambiently** (this bit four separate times in one
+  module). Enumerate deps by grepping BOTH the run scripts' imports AND the tests'
+  subprocess/shell-outs:
+  - `ENV SHELL=/bin/bash` — dojjail `interactive()` does `environ.get("SHELL","/bin/sh")`; the
+    default dash silently drops pre-fed solver input (its "can't access tty" warning is a red
+    herring — not the real failure).
+  - **iptables-legacy backend** — Debian's nft-backend iptables errors `Could not fetch rule set
+    generation id: Invalid argument` inside the kata netns; `update-alternatives --set iptables
+    /usr/sbin/iptables-legacy` (+ ip6tables).
+  - **tcpdump can't drop privileges** — in the namespace the shell is a mapped root whose
+    unprivileged `tcpdump` uid is unmapped, so tcpdump's default drop fails EINVAL; wrap the
+    binary to force `-Z root`.
+  - **`challenge.localhost` must resolve** — Flask `app.run("challenge.localhost", 80)` *binds*
+    the hostname; add `127.0.0.1 challenge.localhost` to `/etc/hosts` (a `.init` line).
+  - install the workspace tools the solvers shell out to (`nmap`, `script`/util-linux, `nc`,
+    `tcpdump`, `sysctl`/procps).
+- **Source-less leaves: rewrite from scratch.** If a leaf is image-only with NO upstream source
+  or solver (e.g. `challenge-secure-chat-N`), you cannot transcribe — design a fresh, minimal,
+  *escalating* series on the module's theme reusing the module `common/` build infra; one
+  concept per level, each with a real seed-robust solver.
+- **`pwnshop.ChallengeGroup`s ship multiple binaries** in one challenge dir (dispatch +
+  vulnerable-overflow; victim + server). One Dockerfile builds all artifacts; the solver drives
+  them together (e.g. use the ECB-oracle `dispatch` binary to forge blocks for the overflow).
+
+## 10. Debug native binaries locally — skip the 10-minute Docker loop
+
+When a native-built C challenge's exploit won't land, do NOT iterate via `pwnshop test`
+(build + privileged run ≈ 10 min each). Render + compile on the host and debug with gdb:
+```
+nix develop -c bash -c 'pwnshop render <leaf>/challenge/x.c.j2 --output /tmp/x.c'
+gcc <the leaf's exact flags: -no-pie -fno-stack-protector [-z execstack] -O0 -w …> -o /tmp/x.bin /tmp/x.c
+gdb -batch -nx -iex 'set debuginfod enabled off' -ex 'run < /tmp/in' -ex 'bt' /tmp/x.bin
+```
+`gdb`/`objdump`/`readelf` are on the host; **pwntools is NOT** — craft inputs in plain python /
+precompute shellcode bytes. For no-ASLR (personality re-exec) stack fidelity, give the local
+binary a path the **same length** as the container's (`/challenge/<name>`, e.g. a 15-char
+`/tmp/…`) so stack/env addresses match; a throwaway helper that `getenv()`s + prints `%p`
+(with the same disable_aslr re-exec) pins the exact env-var-shellcode address. This turned six
+blind 10-min Docker brutes into one gdb session that found the real bug.
+
+**Or debug the REAL container binary directly — inject arbitrary nix tools.** `pwnshop run`'s
+`--volume HOST:HOST:ro` bind-mounts a host path at the *same* location inside the challenge
+container (`lib/__init__.py` ~125), so mounting the host nix store drops ANY nix app (with its
+full dependency closure) into the live container:
+```
+gdb=$(nix develop -c command -v gdb)   # /nix/store/…-gdb/bin/gdb  (or: nix build --no-link --print-out-paths nixpkgs#gdb)
+nix develop -c pwnshop run --user 0 --volume /nix/store <module>/<chal> "$gdb" /challenge/<bin>
+```
+Mount all of `/nix/store` (read-only, so it's a cheap bind, not a copy) so the tool's closure is
+present, then run gdb/strace/ltrace/a pwntools-python/etc. on the **exact** container binary —
+right gcc build, SUID, env, and runtime (incl. kata for `privileged`). Prefer this over the host
+rebuild whenever the rebuild's layout or behaviour might diverge from the container's; the host
+rebuild is for fast pure-exploit-logic iteration with no container at all.
+
+## 11. Native-port solver & exploit mechanics
+
+- **Derive, never hardcode.** A re-home solver hardcoded `WIN_ADDR=0x4013b6` — dead on a native
+  rebuild. Read `win`/symbols via `readelf -sW`, the buffer offset from `lea -0xN(%rbp)` and the
+  frame from `sub $N,%rsp` via `objdump`. Prefer **spray** (`p64(win)*K`) and **NOP-sled + stack
+  brute** over coredump-based exact addresses — coredumps are blocked for SUID binaries run as
+  uid 1000.
+- **Per-run timeout or the brute hangs forever.** A solver that drives a no-timeout challenge in
+  a loop MUST set `subprocess.run(..., timeout=N)` + catch `TimeoutExpired`; one input that makes
+  the challenge loop blocks the whole brute (and the entire test times out).
+- **Crypto oracle = ONE session.** A fresh process per query gets a NEW per-run/per-container key,
+  so byte-at-a-time silently fails; keep one persistent process (pwntools `process`) for all
+  queries.
+- **Env-var shellcode must be null-free** (a null truncates the env string; pwntools
+  `process(env=…)` rejects nulls outright). Hand-roll a null-free stage (`push/pop` for syscall
+  numbers, `mov dh,N` for counts) when shellcraft's output contains nulls.
+- **ASCII-only overflow → 2-byte partial overwrite.** If the overflow source is ASCII-checked you
+  can only write printable bytes: overwrite just the saved return address's low 2 bytes (the high
+  6 stay equal to the original ret, which shares the code page with `win` in a small non-PIE
+  binary), and shift `win()` to a printable-low-2-byte address via tunable `bin_padding` (sweep
+  the pad size, verify with `readelf`). Derive `win` + the ret offset in the solver.
+- **gcc layout drifts from the legacy image** (`-O0`, ubuntu 24.04 vs the legacy gcc): a fixed
+  stack buffer can land mid-frame with the record/loop-counters ABOVE it (in the overflow path),
+  so the copy/overflow loop overwrites its own bounds/counters and runs wild — the OLD exploit
+  relied on the buffer being at the top of the frame. Faithful fix (NOT a challenge change): move
+  the copy/overflow loop into a **`noinline` helper taking the bounds BY VALUE** so a
+  caller-frame overflow can't perturb the loop's own locals, and do any post-overflow stores
+  BEFORE the overflow using the still-clean record.
