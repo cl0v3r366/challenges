@@ -1,0 +1,49 @@
+# syntax=docker/dockerfile:1
+
+FROM python:3.13.1-slim-bookworm
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        bash \
+        ca-certificates \
+        firefox-esr \
+        gcc \
+        iproute2 \
+        libc6-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+ADD --chmod=755 https://github.com/mozilla/geckodriver/releases/download/v0.35.0/geckodriver-v0.35.0-linux64.tar.gz /tmp/geckodriver.tar.gz
+RUN tar -xzf /tmp/geckodriver.tar.gz -C /usr/local/bin geckodriver && \
+    rm /tmp/geckodriver.tar.gz
+
+ADD --chown=0:0 --chmod=6755 http://github.com/pwncollege/exec-suid/releases/latest/download/exec-suid /usr/bin/exec-suid
+
+RUN pip install --no-cache-dir \
+        flask \
+        psutil \
+        pycryptodome \
+        requests \
+        selenium \
+        https://github.com/pwncollege/dojjail/archive/refs/heads/master.zip
+
+RUN echo "hacker:x:1000:1000::/home/hacker:/bin/bash" >> /etc/passwd && \
+    echo "hacker:x:1000:" >> /etc/group && \
+    mkdir -p /home/hacker && \
+    chown 1000:1000 /home/hacker
+
+COPY . /challenge
+RUN rm -f /challenge/Dockerfile && \
+    if [ -f /challenge/check-admin-pin.c ]; then \
+        gcc -O2 -fno-builtin -no-pie -fno-stack-protector -o /challenge/check-admin-pin /challenge/check-admin-pin.c && \
+        rm /challenge/check-admin-pin.c; \
+    fi
+
+COPY --chmod=755 <<'EOF' /challenge/.init
+#!/bin/sh
+
+chmod 755 /challenge/*
+chmod 6755 /challenge/run
+
+rm -f /challenge/.gitkeep
+rm -f /challenge/.init
+EOF
