@@ -1,0 +1,5 @@
+{% extends "../../../../common/Dockerfile.j2" %}
+{% block additional_packages %}gcc binutils make{% endblock %}
+{% block after_setup %}
+RUN chmod +x /challenge/build.sh /challenge/.init && cd /challenge && ./build.sh take-it-or-leave-it.c && mv a.out take-it-or-leave-it && chmod 4755 /challenge/take-it-or-leave-it
+{% endblock %}

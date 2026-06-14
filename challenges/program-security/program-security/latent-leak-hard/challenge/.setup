@@ -1,0 +1,6 @@
+#!/bin/bash
+set -e
+
+chmod 755 /challenge/ld-linux-x86-64.so.2 /challenge/libc.so.6
+patchelf --set-interpreter /challenge/ld-linux-x86-64.so.2 --set-rpath /challenge /challenge/latent-leak-hard
+chmod 4755 /challenge/latent-leak-hard

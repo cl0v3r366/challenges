@@ -1,0 +1,3 @@
+#!/bin/sh
+/challenge/libc-lottery-easy >/tmp/libc-lottery-easy.log 2>&1 &
+sleep 0.2

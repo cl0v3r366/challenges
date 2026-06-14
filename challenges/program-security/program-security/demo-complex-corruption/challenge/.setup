@@ -1,0 +1,8 @@
+#!/bin/bash
+set -e
+
+chmod +x /challenge/build.sh /challenge/poc.py
+chmod -x /challenge/*.c
+
+gcc -Wl,-z,execstack -o /challenge/corruptable_cat /challenge/corruptable_cat.c
+chmod 4755 /challenge/corruptable_cat

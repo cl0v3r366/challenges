@@ -1,0 +1,2 @@
+#!/bin/sh
+/challenge/rop-roulette-easy &

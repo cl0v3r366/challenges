@@ -1,0 +1,5 @@
+{% extends "../../../../common/Dockerfile.j2" %}
+{% block additional_packages %}binutils nasm{% endblock %}
+{% block after_setup %}
+RUN chmod 4755 /challenge/loop-lunacy-hard
+{% endblock %}

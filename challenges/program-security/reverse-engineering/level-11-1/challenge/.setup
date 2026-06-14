@@ -1,0 +1,8 @@
+#!/bin/bash
+set -e
+
+if [ -f /challenge/libcrypto.so.1.1 ]; then
+    install -m 755 /challenge/libcrypto.so.1.1 /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1
+fi
+
+find /challenge -maxdepth 1 -type f     ! -name Dockerfile     ! -name '*.so'     ! -name '*.so.*'     -exec chmod 4755 {} +

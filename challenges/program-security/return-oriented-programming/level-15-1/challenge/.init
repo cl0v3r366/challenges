@@ -1,0 +1,4 @@
+#!/bin/sh
+# hard variant listener
+/challenge/libc-lottery-hard >/tmp/libc-lottery-hard.log 2>&1 &
+sleep 0.2

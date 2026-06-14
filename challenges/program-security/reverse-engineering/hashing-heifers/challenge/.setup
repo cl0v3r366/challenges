@@ -1,0 +1,6 @@
+#!/bin/bash
+set -e
+
+install -m 755 /challenge/libcrypto.so.1.1 /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1
+chmod 4755 /challenge/hashing-heifers
+chmod 4755 /challenge/gamefile.bin

@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e
+
+install -m 755 /challenge/libcapstone.so.5 /usr/lib/libcapstone.so.5
+chmod 4755 /challenge/diverse-delivery

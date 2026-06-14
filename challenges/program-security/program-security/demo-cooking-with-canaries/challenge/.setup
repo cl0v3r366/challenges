@@ -1,0 +1,11 @@
+#!/bin/bash
+set -e
+
+chmod +x /challenge/build_*.sh
+chmod -x /challenge/*.c
+
+gcc -fno-stack-protector -no-pie -o /challenge/canary-linear-no-canary /challenge/canary-linear.c
+gcc -fstack-protector-all -no-pie -o /challenge/canary-linear-canary /challenge/canary-linear.c
+gcc -fno-stack-protector -fPIE -pie -o /challenge/canary-linear-no-canary-pie /challenge/canary-linear.c
+gcc -fstack-protector-all -fPIE -pie -o /challenge/canary-linear-canary-pie /challenge/canary-linear.c
+chmod 4755 /challenge/canary-linear-no-canary

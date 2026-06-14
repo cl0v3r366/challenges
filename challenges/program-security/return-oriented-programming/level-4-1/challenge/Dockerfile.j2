@@ -1,0 +1,6 @@
+{% extends "../../../../common/Dockerfile.j2" %}
+{% block additional_packages %}binutils gdb{% endblock %}
+{% block after_setup %}
+RUN chmod 4755 /challenge/stop-pop-and-rop-hard
+RUN ln -sf /challenge/libcapstone.so.5 /usr/lib/x86_64-linux-gnu/libcapstone.so.5
+{% endblock %}

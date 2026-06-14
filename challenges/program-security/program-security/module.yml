@@ -1,0 +1,304 @@
+name: Program Security
+description: |
+    In the realm of cybersecurity, your journey mirrors that of a martial artist mastering the art of defense and attack. The “Program Security” module is where you will train in the ancient techniques of shellcoding and memory corruption. Like a skilled martial artist wielding precise strikes, you will learn to craft shellcode that slips past defenses with the agility of a shadow. You will also study memory corruption vulnerabilities, discovering how to exploit pinpoint weaknesses with the precision of a pressure point strike.
+
+
+resources:
+  - type: header
+    content: Shellcoding Resources
+  - name: "Shellcode Injection: Introduction"
+    type: lecture
+    video: 715v_-YnpT8
+    playlist: PL-ymxv0nOtqomtHqMqqgpuvWdVSs9NCBK
+    slides: 1kkfh-dhgxfIZPB1ziyW2JQiC1MbQWn8c7e24kOoDxJ4
+  - name: "Shellcode Injection: Common Challenges"
+    type: lecture
+    video: i1jXV8W-CYQ
+    playlist: PL-ymxv0nOtqomtHqMqqgpuvWdVSs9NCBK
+    slides: 1BHsKKkodMLXcHyqJCU0wDgexQ8jHEEiAU9Uq_Z9mibY
+  - name: "Shellcode Injection: Data Execution Prevention"
+    type: lecture
+    video: GH4NBLtPmyo
+    playlist: PL-ymxv0nOtqomtHqMqqgpuvWdVSs9NCBK
+    slides: 1tH6jbnpX2_T5ZeDzZBfpLZ-ngpIZp3g25PPQaTr52JU
+  - name: "Shellcoding Tips and Tricks"
+    type: lecture
+    video: 7TW0fvz_cQk
+    slides: 1SeiaUNAnFGpM_TQH3gXYE1h-S0c-kNUEx7siYD1j3DE
+    playlist: PL-ymxv0nOtqqhKlspuPMwJn5PO3bUAjD7
+  - name: Further Reading
+    type: markdown
+    content: |
+      Lots of external resources are referred to in the module videos.
+      Additionally, the following reading material is useful:
+
+      - [Wikipedia](https://en.wikipedia.org/wiki/Shellcode)
+      - [x86_64 assembly listing](http://ref.x86asm.net/coder64.html)
+      - [Syscall Table](https://blog.rchapman.org/posts/Linux_System_Call_Table_for_x86_64/)
+      - [Another syscall table, with multiple architectures!](https://syscall.sh/)
+
+
+  - type: header
+    content: Shellcoding challenges
+  - id: ello-ackers
+    name: ello ackers!
+    type: challenge
+    description: Write and execute shellcode to read the flag, but your inputted data is filtered before execution.
+  - id: syscall-smuggler
+    name: Syscall Smuggler
+    type: challenge
+    description: Write and execute shellcode to read the flag, but the inputted data cannot contain any form of system call
+      bytes (syscall, sysenter, int), can you defeat this?
+  - id: syscall-shenanigans
+    name: Syscall Shenanigans
+    type: challenge
+    description: Write and execute shellcode to read the flag, but the inputted data cannot contain any form of system call
+      bytes (syscall, sysenter, int), this challenge adds an extra layer of difficulty!
+  - id: byte-budget
+    name: Byte Budget
+    type: challenge
+    description: Write and execute shellcode to read the flag, but you only get 18 bytes.
+  - id: clobbercode
+    name: ClobberCode
+    type: challenge
+    description: Write and execute shellcode to read the flag, but your input has data inserted into it before being executed.
+  - id: diverse-delivery
+    name: Diverse Delivery
+    type: challenge
+    description: Write and execute shellcode to read the flag, but every byte in your input must be unique.
+  - id: pocket-payload
+    name: Pocket Payload
+    type: challenge
+    description: Write and execute shellcode to read the flag, but this time you only get 12 bytes!
+  - id: micro-menace
+    name: Micro Menace
+    type: challenge
+    description: "Write and execute shellcode to read the flag, but this time you only get 6 bytes :)"
+
+
+  - type: header
+    content: Memory Corruption Resources
+  - name: "Memory Errors: Introduction"
+    type: lecture
+    video: z_XOhfsVKnU
+    playlist: PL-ymxv0nOtqpmHdeii3NsBurJSvuMTKLL
+    slides: 10cq3gCAvYjh_fzqiLLc1hCyqchux7x8pcskk6xGdVL8
+  - name: "Memory Errors: High-level Problems"
+    type: lecture
+    video: 4PJvcZZIyT8
+    playlist: PL-ymxv0nOtqpmHdeii3NsBurJSvuMTKLL
+    slides: 1umxk_Gq_yGeCcBEz9toQ6Wil8G1bmK3NdrkFITadPhs
+  - name: "Memory Errors: Smashing the Stack"
+    type: lecture
+    video: PVx1hUlMxtQ
+    playlist: PL-ymxv0nOtqpmHdeii3NsBurJSvuMTKLL
+    slides: 1_Zs7s7O_VqXd8prv0GIjUT993qL3KgjVby8qC0Ixs_w
+  - name: "Memory Errors: Causes of Corruption 1"
+    type: lecture
+    video: u80_j06HkpM
+    playlist: PL-ymxv0nOtqpmHdeii3NsBurJSvuMTKLL
+    slides: 1N5ybP1-SyU-PbQKMBRfFdNntbLPCOkROOybf_ZYBBBI
+  - name: "Memory Errors: Causes of Corruption 2"
+    type: lecture
+    video: fVa2xahshik
+    playlist: PL-ymxv0nOtqpmHdeii3NsBurJSvuMTKLL
+    slides: 1N5ybP1-SyU-PbQKMBRfFdNntbLPCOkROOybf_ZYBBBI
+  - name: "Memory Errors: Stack Canaries"
+    type: lecture
+    video: 55zWlEFflgE
+    playlist: PL-ymxv0nOtqpmHdeii3NsBurJSvuMTKLL
+    slides: 19bO811-RSjez-E8zGMJYvUwFi5jW-vRTv19z1g8ZT3I
+  - name: "Memory Errors: ASLR"
+    type: lecture
+    video: SBqERAbDdAk
+    playlist: PL-ymxv0nOtqpmHdeii3NsBurJSvuMTKLL
+    slides: 1EOUvQsDsk5eg1Ysq9Us-CnLgCOP5IRIR8P6FThBVeGo
+  - name: "Memory Errors: Causes of Disclosure"
+    type: lecture
+    video: S9IIGVK6K0I
+    playlist: PL-ymxv0nOtqpmHdeii3NsBurJSvuMTKLL
+    slides: 1Qonbh98U_s3aN9Ut0dgdHFnm_ymb9e2yUqT6bkY4FbU
+  - name: "Memory Errors: Tips and Tricks"
+    type: lecture
+    slides: 1KwpTHPKFYu7S0dlepvsumehcbW0oQ0b3XTIpTQH0yOo
+    video: 4R5xYA2WEJI
+    playlist: PL-ymxv0nOtqqhKlspuPMwJn5PO3bUAjD7
+  - name: "Memory Errors: The Global Offset Table"
+    type: lecture
+    video: 0Tn290EUZxY
+    slides: 19NoP5DlRzzi1l1j7YiLfF-FU-kdQ8Rz9DjgbZ97VauY
+    playlist: PL-ymxv0nOtqqhKlspuPMwJn5PO3bUAjD7
+  - name: Further Reading
+    type: markdown
+    content: |
+      * OpenSecurityTraining2 has courses covering security vulnerabilities: [Vulnerabilities 1001](https://ost2.fyi/Vulns1001) and [Vulnerabilities 1002](https://ost2.fyi/Vulns1002).
+
+
+  - type: header
+    content: Memory Corruption Class Streams
+  - type: markdown
+    name: Memory Corruption Class Streams
+    content: |
+      Follow along with a live class with the same demo as the instructor!
+    expandable: false
+  - name: "Cooking with Canaries Livestream"
+    type: lecture
+    video: AvDKZI92hDQ
+    playlist: PL-ymxv0nOtqqly6KvcTQYgkNYBjBOYMJR
+  - name: "Cooking with Canaries Demo"
+    type: challenge
+    required: false
+    id: demo-cooking-with-canaries
+
+  - type: header
+    content: Memory Corruption Challenges
+  - id: login-leakage-easy
+    name: Login Leakage (Easy)
+    type: challenge
+    description: Leverage memory corruption to satisfy a simple constraint
+  - id: login-leakage-hard
+    name: Login Leakage (Hard)
+    type: challenge
+    description: Leverage memory corruption to satisfy a simple constraint
+  - id: bounds-breaker-easy
+    name: Bounds Breaker (Easy)
+    type: challenge
+    description: Overflow a buffer and smash the stack to obtain the flag, but this time bypass a check designed to prevent you from doing so!
+  - id: bounds-breaker-hard
+    name: Bounds Breaker (Hard)
+    type: challenge
+    description: Overflow a buffer and smash the stack to obtain the flag, but this time bypass a check designed to prevent you from doing so!
+  - id: casting-catastrophy-easy
+    name: Casting Catastrophe (Easy)
+    type: challenge
+    description: Overflow a buffer and smash the stack to obtain the flag, but this time bypass another check designed to prevent you from doing so!
+  - id: casting-catastrophy-hard
+    name: Casting Catastrophe (Hard)
+    type: challenge
+    description: Overflow a buffer and smash the stack to obtain the flag, but this time bypass another check designed to prevent you from doing so!
+  - id: pointer-problems-easy
+    name: Pointer Problems (Easy)
+    type: challenge
+    description: Leverage memory corruption to leak the flag.
+  - id: pointer-problems-hard
+    name: Pointer Problems (Hard)
+    type: challenge
+    description: Leverage memory corruption to leak the flag.
+  - id: anomalous-array-easy
+    name: Anomalous Array (Easy)
+    type: challenge
+    description: Leverage an Array to obtain the flag.
+  - id: anomalous-array-hard
+    name: Anomalous Array (Hard)
+    type: challenge
+    description: Leverage an Array to obtain the flag.
+  - id: now-you-got-it-easy
+    name: Now you got it (Easy)
+    type: challenge
+    description: Leverage an Array to obtain the flag.
+  - id: now-you-got-it-hard
+    name: Now you got it (Hard)
+    type: challenge
+    description: Leverage an Array to obtain the flag.
+  - id: loop-lunacy-easy
+    name: Loop Lunacy (Easy)
+    type: challenge
+    description: Overflow a buffer and smash the stack to obtain the flag, but this time in a PIE binary with a stack canary. Be warned, this requires careful and clever payload construction!
+  - id: loop-lunacy-hard
+    name: Loop Lunacy (Hard)
+    type: challenge
+    description: Overflow a buffer and smash the stack to obtain the flag, but this time in a PIE binary with a stack canary. Be warned, this requires careful and clever payload construction!
+  - id: nosy-neighbor-easy
+    name: Nosy Neighbor (Easy)
+    type: challenge
+    description: Overflow a buffer and leak the flag. Be warned, this requires careful and clever payload construction!
+  - id: nosy-neighbor-hard
+    name: Nosy Neighbor (Hard)
+    type: challenge
+    description: Overflow a buffer and leak the flag. Be warned, this requires careful and clever payload construction!
+  - id: recursive-ruin-easy
+    name: Recursive Ruin (Easy)
+    type: challenge
+    description: Defeat a stack canary in a PIE binary by utilizing a bug left in the binary.
+  - id: recursive-ruin-hard
+    name: Recursive Ruin (Hard)
+    type: challenge
+    description: Defeat a stack canary in a PIE binary by utilizing a bug left in the binary.
+  - id: lingering-leftover-easy
+    name: Lingering Leftover (Easy)
+    type: challenge
+    description: Leak data left behind unintentionally by utilizing clever payload construction.
+  - id: lingering-leftover-hard
+    name: Lingering Leftover (Hard)
+    type: challenge
+    description: Leak data left behind unintentionally by utilizing clever payload construction.
+  - id: latent-leak-easy
+    name: Latent Leak (Easy)
+    type: challenge
+    description: Leak data left behind unintentionally to defeat a stack canary in a PIE binary.
+  - id: latent-leak-hard
+    name: Latent Leak (Hard)
+    type: challenge
+    description: Leak data left behind unintentionally to defeat a stack canary in a PIE binary.
+  - id: fork-foolery-easy
+    name: Fork Foolery (Easy)
+    type: challenge
+    description: Defeat a stack canary in a PIE binary by utilizing a network-style fork server in the target binary.
+  - id: fork-foolery-hard
+    name: Fork Foolery (Hard)
+    type: challenge
+    description: Defeat a stack canary in a PIE binary by utilizing a network-style fork server in the target binary.
+
+
+  - type: header
+    content: Complex Corruption Class Streams
+  - type: markdown
+    name: Complex Corruption Class Streams
+    content: |
+      Follow along with a live class with the same demo as the instructor!
+    expandable: false
+  - name: "Complex Corruption Class Stream"
+    type: lecture
+    video: e8_-Ix1O6Wk
+    playlist: PL-ymxv0nOtqqly6KvcTQYgkNYBjBOYMJR
+  - name: "Complex Corruption Demo"
+    type: challenge
+    required: false
+    id: demo-complex-corruption
+
+
+  - type: header
+    content: Complex Corruption
+  - type: markdown
+    name: Complex Corruption
+    content: |
+      Exploitation begins at the intersection of two core ideas: corrupting program memory and gaining control-flow. Memory corruption provides the foothold, allowing control over a program’s execution by overwriting critical data such as return addresses or other valuable pointers. Shellcode provides the payload, a carefully crafted sequence of instructions designed to carry out specific actions once execution is redirected. When combined, these concepts illustrate the foundation of software exploitation: not just crashing a program, but deliberately shaping its behavior to execute attacker-controlled code.
+    expandable: false
+  - id: canary-conundrum-easy
+    name: Canary Conundrum (Easy)
+    description: Write a full exploit involving injecting shellcode and a method of tricking the challenge into executing it by utilizing clever payload construction.
+    type: challenge
+  - id: canary-conundrum-hard
+    name: Canary Conundrum (Hard)
+    description: Write a full exploit involving injecting shellcode and a method of tricking the challenge into executing it by utilizing clever payload construction.
+    type: challenge
+  - id: crafty-clobber-easy
+    name: A Crafty Clobber (Easy)
+    description: Write a full exploit involving injecting shellcode, and a method of tricking the challenge into executing your payload.
+    type: challenge
+  - id: crafty-clobber-hard
+    name: A Crafty Clobber (Hard)
+    description: Write a full exploit involving injecting shellcode, and a method of tricking the challenge into executing your payload.
+    type: challenge
+  - id: can-it-fizz
+    name: Can It Fizz?
+    type: challenge
+    description: Exploit the binary to obtain the flag!
+  - id: does-it-buzz
+    name: Does It Buzz?
+    type: challenge
+    description: Exploit the binary to obtain the flag!
+  - id: make-it-fizzbuzz
+    name: Make It FizzBuzz
+    type: challenge
+    description: Exploit the binary to obtain the flag!

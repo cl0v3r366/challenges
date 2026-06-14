@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e
+
+chmod 4755 /challenge/when-the-cow-says-moo
+chmod 4755 /challenge/gamefile.bin

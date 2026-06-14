@@ -1,0 +1,8 @@
+{% extends "../../../../common/Dockerfile.j2" %}
+{% block additional_packages %}binutils gdb patchelf netcat-openbsd{% endblock %}
+{% block after_setup %}
+RUN chmod 4755 /challenge/putsception-easy
+RUN patchelf --set-interpreter /challenge/ld-linux-x86-64.so.2 /challenge/putsception-easy
+RUN patchelf --set-rpath /challenge /challenge/putsception-easy
+RUN ln -sf /challenge/libcapstone.so.5 /usr/lib/x86_64-linux-gnu/libcapstone.so.5
+{% endblock %}
