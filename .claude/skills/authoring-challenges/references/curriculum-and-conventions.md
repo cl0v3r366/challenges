@@ -50,6 +50,32 @@ resources:
   not just a generic YAML parse. When editing one entry among many similar ones, keep the
   edit target tight so you don't touch an adjacent, pre-existing challenge.
 
+## Porting and moving modules
+
+Green `pwnshop test` output is necessary but not enough for a faithful module port. The
+dojo parser and learner-facing material can still be wrong while every challenge directory
+builds.
+
+- **Every module listed by `dojo.yml` needs its own `module.yml`.** The parser reads the
+  module file for contents; if it is missing, the module parses as empty and every level
+  silently disappears from the dojo. Run
+  `tools/dojo/parse-dojo-yml <dojo>/dojo.yml --json` and confirm expected module and level
+  counts, not just that parsing succeeds.
+- **Port the whole `module.yml`, not just challenge ids.** Preserve lecture video/playlist/
+  slides ids, `markdown` resources, `header` section breaks, challenge names, order,
+  visibility, and any learner-facing per-challenge descriptions that belong there.
+- **Interleave resources and challenges when the old module did.** The parser emits all
+  `resources:` entries before all top-level `challenges:` entries, so splitting headers into
+  `resources:` and levels into `challenges:` detaches every header from its challenge group.
+  Put lectures, headers, markdown, and `type: challenge` entries in one ordered `resources:`
+  list when display grouping matters.
+- **Port every `DESCRIPTION.md`.** Missing learner text is a port blocker even if tests pass.
+  For faithful ports, byte-diff the new descriptions against OLD unless the user explicitly
+  requested a rewrite.
+- **Moving paths has second-order fallout.** After relocating a module (for example into a
+  dojo subdirectory), grep `README.md`, `docs/`, AGENTS/CLAUDE files, tests, and templates for
+  stale paths and for relative `../../common` references that no longer resolve.
+
 ## Universal challenge directory layout
 
 ```
@@ -116,13 +142,27 @@ Some archetypes set a var before including (program-misuse: `{% set program_name
 
 - `tests_private/test_solve.sh` performs the **actual published solve** and asserts the
   real flag returns, e.g. `... | tee /dev/stderr | grep "pwn.college{"`. Make it
-  deterministic (compute, don't guess). Files must be executable.
-- `tests_public/` verifies functionality (binary builds/runs, server responds).
+  deterministic (compute, don't guess). Files must be executable. When reviewing or porting,
+  use `pwnshop test --require-solved`; pwnshop distinguishes **passed** (test exited 0) from
+  **solved** (the real random `/flag` appeared in output), so tests that simulate the target
+  or print `pwn.college{dummyflag}` are fake passes.
+- `tests_public/` verifies actual functionality (binary builds/runs, server responds, a
+  real command path works). A placeholder that only lists `/challenge` is not a valid public
+  test.
 - **`tests_private/**` is git-crypt-encrypted per module:** `.gitattributes` carries
   `**/tests_private/** filter=git-crypt-<MODULE> diff=git-crypt-<MODULE>` (distinct key
   namespace per module). Borrow the key from a sibling checkout under
   `~/pwncollege/challenges*/.git/git-crypt/keys/` rather than prompting for a passphrase.
-- Always run via `nix develop --command pwnshop test <path>`.
+  Check the **staged/index blob**, not just the unlocked worktree: `git crypt status` should
+  not report the path as unencrypted, and `git cat-file -p :path/to/test | head` should show
+  the `GITCRYPT` header for private tests.
+- Always run via `nix develop --command pwnshop test <path>` (or `./pwnshop` inside the dev
+  shell if PATH resolves an unrelated/broken wrapper).
+- For flaky/timing/network tests, one pass is not proof. Loop the test or use
+  `pwnshop test --attempts N`; tune timing-sensitive solves in the actual pwnshop container,
+  not just on the host. If dojjail/netns startup sometimes crashes before the solve code runs,
+  use a bounded retry around the real `/challenge/run` execution rather than replacing it
+  with a simulator.
 
 ## Writing the DESCRIPTION.md
 

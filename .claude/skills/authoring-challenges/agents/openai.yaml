@@ -1,0 +1,4 @@
+interface:
+  display_name: "Authoring Challenges"
+  short_description: "Create and review pwn.college challenges"
+  default_prompt: "Use $authoring-challenges to create or review a pwn.college challenge in this repository."

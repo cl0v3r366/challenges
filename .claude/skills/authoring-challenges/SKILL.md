@@ -36,6 +36,12 @@ your archetype.
 - **Never declare a mechanism impossible until you've checked how siblings do it.** The
   blessed pattern (a `bin/gdb` exec-suid wrapper, a `submit-number`, a victim script, a
   seccomp allowance in `runtime/`) is in the repo, not a blank slate or the user's head.
+- **For ports/reviews, validate the whole learner experience, not just green builds.** A
+  module named in `dojo.yml` needs its own `module.yml`; run
+  `tools/dojo/parse-dojo-yml … --json` and confirm the expected level counts. Preserve
+  lectures, headers, markdown, challenge names/order, every per-challenge `DESCRIPTION.md`,
+  and stale docs paths after moves. See `references/curriculum-and-conventions.md` →
+  "Porting and moving modules".
 
 ## 1. Pedagogy — the most-corrected area (universal)
 - **One new concept per level.** Count what a level introduces and compare to its
@@ -137,16 +143,25 @@ your archetype.
     the kernel gives you (inherited FDs survive `execve` — no memfd copy of `/flag`).
   - **Python checkers / Jinja / shell:** extend the common base, set a few `{% block setup %}`
     vars, override only what differs; don't paste a whole service when a block override
-    suffices. Shell: compact `[ cond ] || { echo msg >&2; exit 1; }` guards.
+    suffices. Shell: compact `[ cond ] || { echo msg >&2; exit 1; }` guards. In Jinja,
+    remember pwnshop renders each file with a fresh seeded `random`; if body and test need
+    the same seeded values, call the same setup macro first in both files and pass `random`
+    explicitly into imported macros. Render-check SUID/Python templates: the shebang must be
+    physical line 1, and `{%- ... -%}` immediately after it can strip its newline.
 
 ## 4. Testing & integrity — non-negotiable (universal)
 - **Run `pwnshop test` ONLY inside `nix develop`.** Outside it, pwnshop silently falls
   through to the host dockerd (stock seccomp) and `personality`/ASLR challenges fail with
   `personality: Operation not permitted`. That EPERM means **"enter the dev shell," not
   "patch pwnshop/the challenge."** See [[feedback_fix_at_devshell_layer]].
-- **`tests_private/test_*.sh` runs the actual solve and confirms the real flag** — build
-  the reference solution, run it, and `grep "pwn.college{"`. `tests_public` checks
-  functionality. Test files must be executable.
+- If a dev shell still resolves an import-broken/user-local `pwnshop`, retry with the
+  repo-local `./pwnshop` before treating the output as a challenge failure.
+- **`tests_private/test_*` runs the actual solve and confirms the real flag** — build
+  the reference solution, run it, and `grep "pwn.college{"`. When reviewing or porting, use
+  `pwnshop test --require-solved`: pwnshop tracks "passed" (exit 0) separately from "solved"
+  (the real random `/flag` appeared), so a dummy flag or local simulator can otherwise fake
+  a pass. `tests_public` must drive real functionality, not just `ls /challenge`. Test files
+  must be executable.
 - **Never claim tests pass without running them and reading the output;** qualify a pass
   with its environment. Per the global rule, all tests must pass at all times — there is
   no "preexisting flakiness."
@@ -154,6 +169,10 @@ your archetype.
   patched dockerd behind `DOCKER_HOST`) is a latent trap — make the dependency explicit.
 - When `pwnshop` flakes under `nix develop` (transient build/network blip), **retry the
   same command** — don't pivot to the host daemon or hand-rolled `docker run` for a green.
+- For timing/network/dojjail tests, one green run is not proof. Loop the test or use
+  `pwnshop test --attempts N`; tune timing-sensitive solves inside the pwnshop container,
+  not only on the host, and wrap fast dojjail/netns startup crashes in a bounded retry that
+  still drives the real `/challenge/run`.
 
 ## 5. Git & communication (universal)
 - **On an unpushed WIP branch, just amend** an obvious fix — no permission menus.
@@ -178,7 +197,8 @@ your archetype.
 - **`tests_private/**` is git-crypt-encrypted** per module (`.gitattributes`:
   `**/tests_private/** filter=git-crypt-<MODULE>`). Borrow the key from a sibling checkout
   under `~/pwncollege/challenges*/.git/git-crypt/keys/` instead of prompting for a GPG
-  passphrase.
+  passphrase. Verify the staged/index blob, not the unlocked worktree plaintext:
+  `git crypt status` or `git cat-file -p :path/to/test | head` should show `GITCRYPT`.
 
 ## 7. Archetypes — pick one, then open its reference
 - **Templated web / service** (Flask, sqli, cmdi, path-traversal, xss; victims) →
@@ -191,7 +211,8 @@ your archetype.
   Dockerfile/.setup/.init, exec-suid, git-crypt, DESCRIPTION voice) →
   `references/curriculum-and-conventions.md`
 - **Legacy** (`challenges/legacy/**`) pulls prebuilt binaries from external dojos via
-  `Dockerfile.j2` + a stub `test_legacy.sh.j2`; don't author new content here.
+  `Dockerfile.j2` + a stub `test_legacy.sh.j2`; don't author new content here. For OLD/
+  legacy ports or port audits, also load `porting-legacy-challenges`.
 
 ## Recurring failure modes to self-check against
 1. Hand-rolled what a common template already provides (didn't `extends`/`include`).
@@ -201,4 +222,7 @@ your archetype.
    Or assumed a fixed flag length (hardcoded a byte count / too-small pad capacity) — flags vary.
 5. Crammed more than one concept into a level, or mismatched the module's voice.
 6. Didn't consult siblings / `runtime/` before building or before giving up.
-7. Claimed success (tests, push) without verifying, or attributed a change to the user.
+7. Shipped a module that tests green but is invisible/incomplete in the dojo (missing
+   `module.yml`, dropped resources, missing DESCRIPTIONs, stale docs paths).
+8. Claimed success (tests, push, encryption) without verifying, or attributed a change to
+   the user.
