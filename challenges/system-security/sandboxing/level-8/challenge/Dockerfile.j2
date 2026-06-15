@@ -1,0 +1,11 @@
+{% extends "../../../../common/Dockerfile.j2" %}
+{% block additional_packages %}gcc binutils libseccomp-dev{% endblock %}
+{% block before_copy %}RUN echo sandbox-level-8-v3 > /etc/pwn_sandbox_level{% endblock %}
+{% block setup %}
+RUN <<END
+    set -e
+    gcc -O0 -fno-pie -no-pie -o /challenge/babyjail_level8 /challenge/babyjail_level8.c -lseccomp
+    chmod 4755 /challenge/babyjail_level8
+    rm -f /challenge/Dockerfile /challenge/.setup /challenge/babyjail_level8.c
+END
+{% endblock %}

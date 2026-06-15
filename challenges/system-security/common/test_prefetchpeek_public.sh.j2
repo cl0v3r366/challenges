@@ -1,0 +1,11 @@
+#!/bin/bash
+set -euo pipefail
+
+binary="/challenge/{{ c.binary }}"
+test -u "$binary"
+
+python3 - <<'PY' | timeout 20 "$binary" >/dev/null
+import sys
+
+sys.stdout.buffer.write(b"\xb8\x3c\x00\x00\x00\x31\xff\x0f\x05")
+PY

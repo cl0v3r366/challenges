@@ -1,0 +1,5 @@
+#!/bin/bash
+set -euo pipefail
+
+build-kernel-module /challenge/challenge.c /challenge/babykernel_level9.1.ko
+rm -f /challenge/challenge.c

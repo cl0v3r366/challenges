@@ -1,0 +1,155 @@
+id: kernel-security
+name: Kernel Security
+description: |-
+  The kernel is the core component of an operating system, serving as the bridge between software and hardware. Operating at the lowest level of the OS, the kernel's access is so profound that it can be likened to impersonating the system itself, surpassing even the highest privileges of a root user. Kernel security is paramount because a breach at this level allows attackers to act as if they are the system. Vulnerabilities can lead to scenarios like unauthorized data access, system crashes, or the silent installation of rootkits.
+
+  In order to get started on kernel challenges, you will need to run the challenges inside a virtual machine.  You can start this VM done by running a command while at a terminal, `vm start`.  The virtual machine will automatically load the kernel module located in the `/challenge` directory.  You can then connect your terminal to this virtual machine with `vm connect`!
+resources:
+- name: 'Kernel: Introduction'
+  type: lecture
+  video: j0I2AakUAxk
+  playlist: PL-ymxv0nOtqowTpJEW4XTiGQYx6iwa6og
+  slides: 1oUaPUtLIDEMcK49gwvEMmXTyMBVQAeCWvSONV3OkIio
+- name: 'Kernel: Environment Setup'
+  type: lecture
+  video: mDn5IxMetgQ
+  playlist: PL-ymxv0nOtqowTpJEW4XTiGQYx6iwa6og
+  slides: 1Ik7EWjn_9ywzCW3MpJJ0eVdIvhIMP6brObBQQDtYDCo
+- name: 'Kernel: Kernel Modules'
+  type: lecture
+  video: DLWBWeN2ebM
+  playlist: PL-ymxv0nOtqowTpJEW4XTiGQYx6iwa6og
+  slides: 1JP1VBpK-kapHanMT4rAF9UtGglId_ZXD2Xh46gPQZFM
+- name: 'Kernel: Privilege Escalation'
+  type: lecture
+  video: 8ty-IFWvuHM
+  playlist: PL-ymxv0nOtqowTpJEW4XTiGQYx6iwa6og
+  slides: 1tcR4YsVhN2kVUfe8RJw56dtSs-QOwp4-g8qgI0Q3kFM
+- name: 'Kernel: Escaping Seccomp'
+  type: lecture
+  video: mKzUA3j6myg
+  playlist: PL-ymxv0nOtqowTpJEW4XTiGQYx6iwa6og
+  slides: 1YMlOERClX6Yi8Fb9DYxBBJ5MYB1C-_F75XKkoSmbl8k
+- name: 'Kernel Security: Memory Management'
+  type: lecture
+  video: SygLhZUTmKQ
+  playlist: PL-ymxv0nOtqowTpJEW4XTiGQYx6iwa6og
+  slides: 1NuvKHcszim25_kNBs5zjYEQYR8xjsLHK14GX8_9wFbE
+- name: 'Kernel Security: Mitigations'
+  type: lecture
+  video: 8nWw8jlQnew
+  playlist: PL-ymxv0nOtqowTpJEW4XTiGQYx6iwa6og
+  slides: 1DNxufs_WlQRkzBMjPD7UE1qRrd87XDGpfQSPkiajEyE
+- name: 'Kernel Security: Writing Kernel Shellcode'
+  type: lecture
+  video: L9dJNJDIa5M
+  playlist: PL-ymxv0nOtqowTpJEW4XTiGQYx6iwa6og
+  slides: 10Wr3Lj08N-MNZkrk_0WwSG2QgnbLB4cqJsZpNjKj8pI
+- name: The VM
+  type: markdown
+  content: |-
+    These challenges need to be solved in a _virtual machine_!
+    You can launch with the virtual machine using the `vm` command, then interact with the challenges.
+- name: Further Reading
+  type: markdown
+  content: |-
+    - Some [notes to Linux Virtual Memory management](https://github.com/lorenzo-stoakes/linux-mm-notes).
+    - A [collection of links](https://github.com/xairy/linux-kernel-exploitation) related to Linux kernel security and exploitation.
+    - An awesome series on [OS haxx0ring](https://youtube.com/playlist?list=PLMOpZvQB55bcRA5-KjvW7dVyGUarcqZuL) from the perspective of an OS developer.
+    - A [blog/walkthrough](https://zolutal.github.io/understanding-paging) on x86_64 virtual address translation.
+- type: challenge
+  id: level-1-0
+  name: level1.0
+  description: Ease into kernel exploitation with this simple crackme level!
+- type: challenge
+  id: level-1-1
+  name: level1.1
+  description: Ease into kernel exploitation with this simple crackme level!
+- type: challenge
+  id: level-2-0
+  name: level2.0
+  description: Ease into kernel exploitation with another crackme level.
+- type: challenge
+  id: level-2-1
+  name: level2.1
+  description: Ease into kernel exploitation with another crackme level.
+- type: challenge
+  id: level-3-0
+  name: level3.0
+  description: Ease into kernel exploitation with another crackme level, this time with some privilege escalation (whoami?).
+- type: challenge
+  id: level-3-1
+  name: level3.1
+  description: Ease into kernel exploitation with another crackme level, this time with some privilege escalation (whoami?).
+- type: challenge
+  id: level-4-0
+  name: level4.0
+  description: Ease into kernel exploitation with another crackme level and learn how kernel devices communicate.
+- type: challenge
+  id: level-4-1
+  name: level4.1
+  description: Ease into kernel exploitation with another crackme level and learn how kernel devices communicate.
+- type: challenge
+  id: level-5-0
+  name: level5.0
+  description: Utilize your hacker skillset to communicate with a kernel device and get the flag.
+- type: challenge
+  id: level-5-1
+  name: level5.1
+  description: Utilize your hacker skillset to communicate with a kernel device and get the flag.
+- type: challenge
+  id: level-6-0
+  name: level6.0
+  description: Utilize a 'buggy' kernel device and shellcode to escalate privileges to root and get the flag!
+- type: challenge
+  id: level-6-1
+  name: level6.1
+  description: Utilize a 'buggy' kernel device and shellcode to escalate privileges to root and get the flag!
+- type: challenge
+  id: level-7-0
+  name: level7.0
+  description: Utilize a 'buggy' kernel device and shellcode to escalate privileges to root and get the flag!
+- type: challenge
+  id: level-7-1
+  name: level7.1
+  description: Utilize a 'buggy' kernel device and shellcode to escalate privileges to root and get the flag!
+- type: challenge
+  id: level-8-0
+  name: level8.0
+  description: Utilize a userspace binary to interact with a kernel device.
+- type: challenge
+  id: level-8-1
+  name: level8.1
+  description: Utilize a userspace binary to interact with a kernel device.
+- type: challenge
+  id: level-9-0
+  name: level9.0
+  description: Exploit a buggy kernel device to get the flag!
+- type: challenge
+  id: level-9-1
+  name: level9.1
+  description: Exploit a buggy kernel device to get the flag!
+- type: challenge
+  id: level-10-0
+  name: level10.0
+  description: Exploit a buggy kernel device with KASLR enabled to get the flag!
+- type: challenge
+  id: level-10-1
+  name: level10.1
+  description: Exploit a buggy kernel device with KASLR enabled to get the flag!
+- type: challenge
+  id: level-11-0
+  name: level11.0
+  description: Exploit a kernel device utilizing a userspace binary, with a twist!
+- type: challenge
+  id: level-11-1
+  name: level11.1
+  description: Exploit a kernel device utilizing a userspace binary, with a twist!
+- type: challenge
+  id: level-12-0
+  name: level12.0
+  description: Exploit a kernel device utilizing a userspace binary, with a twist!
+- type: challenge
+  id: level-12-1
+  name: level12.1
+  description: Exploit a kernel device utilizing a userspace binary, with a twist!

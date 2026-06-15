@@ -1,0 +1,163 @@
+{%- macro defaults(c) -%}
+  {%- set c.chroot_path = "/tmp/jail-XXXXXX" -%}
+  {%- set c.fake_flag = "FLAG{FAKE}" -%}
+  {%- set c.chroot = true -%}
+  {%- set c.chdir = true -%}
+  {%- set c.open_file = true -%}
+  {%- set c.allow_flag_path = false -%}
+  {%- set c.send_file = false -%}
+  {%- set c.shellcode = true -%}
+  {%- set c.syscalls_allowed = [] -%}
+  {%- set c.seccomp_default_kill = true -%}
+  {%- set c.seccomp_add_arch_x86 = false -%}
+  {%- set c.close_fds = false -%}
+  {%- set c.nsroot = false -%}
+  {%- set c.shell = false -%}
+  {%- set c.scratch_dir = false -%}
+  {%- set c.mounted_dirs = [] -%}
+  {%- set c.mounted_dirs_ro = false -%}
+  {%- set c.unmount_old_root = false -%}
+{%- endmacro -%}
+
+{%- macro chroot_escape(c) -%}
+  {{- defaults(c) -}}
+  {%- set c.chdir = false -%}
+  {%- set c.open_file = false -%}
+  {%- set c.allow_flag_path = true -%}
+  {%- set c.send_file = true -%}
+  {%- set c.shellcode = false -%}
+  {%- set c.solve = "chroot_escape" -%}
+{%- endmacro -%}
+
+{%- macro chroot_shellcode(c) -%}
+  {{- defaults(c) -}}
+  {%- set c.chdir = false -%}
+  {%- set c.solve = "chroot_shellcode" -%}
+{%- endmacro -%}
+
+{%- macro chroot_chdir(c) -%}
+  {{- defaults(c) -}}
+  {%- set c.solve = "chroot_chdir" -%}
+{%- endmacro -%}
+
+{%- macro chroot_openat_only(c) -%}
+  {{- defaults(c) -}}
+  {%- set c.syscalls_allowed = ["openat", "read", "write", "sendfile"] -%}
+  {%- set c.solve = "chroot_openat_only" -%}
+{%- endmacro -%}
+
+{%- macro chroot_linkat_only(c) -%}
+  {{- defaults(c) -}}
+  {%- set c.syscalls_allowed = ["linkat", "open", "read", "write", "sendfile"] -%}
+  {%- set c.solve = "chroot_linkat_only" -%}
+{%- endmacro -%}
+
+{%- macro chroot_fchdir_only(c) -%}
+  {{- defaults(c) -}}
+  {%- set c.syscalls_allowed = ["fchdir", "open", "read", "write", "sendfile"] -%}
+  {%- set c.solve = "chroot_fchdir_only" -%}
+{%- endmacro -%}
+
+{%- macro chroot_rechroot_only(c) -%}
+  {{- defaults(c) -}}
+  {%- set c.syscalls_allowed = ["chdir", "chroot", "mkdir", "open", "read", "write", "sendfile"] -%}
+  {%- set c.solve = "chroot_rechroot_only" -%}
+{%- endmacro -%}
+
+{%- macro chroot_leaked_fd(c) -%}
+  {{- defaults(c) -}}
+  {%- set c.open_file = false -%}
+  {%- set c.syscalls_allowed = ["openat", "read", "write", "sendfile"] -%}
+  {%- set c.solve = "chroot_leaked_fd" -%}
+{%- endmacro -%}
+
+{%- macro x86_syscalls(c) -%}
+  {{- defaults(c) -}}
+  {%- set c.chroot = false -%}
+  {%- set c.open_file = false -%}
+  {%- set c.syscalls_allowed = ["close", "stat", "fstat", "lstat"] -%}
+  {%- set c.seccomp_default_kill = false -%}
+  {%- set c.seccomp_add_arch_x86 = true -%}
+  {%- set c.solve = "x86_syscalls" -%}
+{%- endmacro -%}
+
+{%- macro exit_code_sidechannel(c) -%}
+  {{- defaults(c) -}}
+  {%- set c.chroot = false -%}
+  {%- set c.allow_flag_path = true -%}
+  {%- set c.syscalls_allowed = ["read", "exit"] -%}
+  {%- set c.solve = "exit_code_sidechannel" -%}
+{%- endmacro -%}
+
+{%- macro nanosleep_sidechannel(c) -%}
+  {{- defaults(c) -}}
+  {%- set c.chroot = false -%}
+  {%- set c.allow_flag_path = true -%}
+  {%- set c.syscalls_allowed = ["read", "nanosleep"] -%}
+  {%- set c.solve = "nanosleep_sidechannel" -%}
+{%- endmacro -%}
+
+{%- macro read_sidechannel(c) -%}
+  {{- defaults(c) -}}
+  {%- set c.chroot = false -%}
+  {%- set c.allow_flag_path = true -%}
+  {%- set c.syscalls_allowed = ["read"] -%}
+  {%- set c.solve = "read_sidechannel" -%}
+{%- endmacro -%}
+
+{%- macro ns_no_unmount_old(c) -%}
+  {{- defaults(c) -}}
+  {%- set c.shellcode = false -%}
+  {%- set c.mounted_dirs = ["bin", "usr", "lib", "lib64"] -%}
+  {%- set c.chroot = false -%}
+  {%- set c.nsroot = true -%}
+  {%- set c.open_file = false -%}
+  {%- set c.shell = true -%}
+  {%- set c.close_fds = true -%}
+  {%- set c.solve = "ns_no_unmount_old" -%}
+{%- endmacro -%}
+
+{%- macro ns_read_write(c) -%}
+  {{- ns_no_unmount_old(c) -}}
+  {%- set c.unmount_old_root = true -%}
+  {%- set c.solve = "ns_read_write" -%}
+{%- endmacro -%}
+
+{%- macro ns_mount_proc(c) -%}
+  {{- defaults(c) -}}
+  {%- set c.shellcode = false -%}
+  {%- set c.mounted_dirs = ["bin", "usr", "lib", "lib64", "proc"] -%}
+  {%- set c.mounted_dirs_ro = true -%}
+  {%- set c.chroot = false -%}
+  {%- set c.nsroot = true -%}
+  {%- set c.open_file = false -%}
+  {%- set c.shell = true -%}
+  {%- set c.close_fds = true -%}
+  {%- set c.unmount_old_root = true -%}
+  {%- set c.solve = "ns_mount_proc" -%}
+{%- endmacro -%}
+
+{%- macro ns_smuggle_fd(c) -%}
+  {{- defaults(c) -}}
+  {%- set c.mounted_dirs = [] -%}
+  {%- set c.mounted_dirs_ro = true -%}
+  {%- set c.chroot = false -%}
+  {%- set c.nsroot = true -%}
+  {%- set c.open_file = true -%}
+  {%- set c.close_fds = true -%}
+  {%- set c.unmount_old_root = true -%}
+  {%- set c.solve = "ns_smuggle_fd" -%}
+{%- endmacro -%}
+
+{%- macro ns_scratch_dir(c) -%}
+  {{- defaults(c) -}}
+  {%- set c.mounted_dirs = [] -%}
+  {%- set c.mounted_dirs_ro = true -%}
+  {%- set c.chroot = false -%}
+  {%- set c.nsroot = true -%}
+  {%- set c.open_file = false -%}
+  {%- set c.scratch_dir = true -%}
+  {%- set c.close_fds = true -%}
+  {%- set c.unmount_old_root = true -%}
+  {%- set c.solve = "ns_scratch_dir" -%}
+{%- endmacro -%}

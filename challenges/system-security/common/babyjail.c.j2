@@ -1,0 +1,195 @@
+#define _GNU_SOURCE
+#include <assert.h>
+#include <fcntl.h>
+{% if c.syscalls_allowed %}
+#include <seccomp.h>
+{% endif %}
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <dirent.h>
+#include <limits.h>
+#include <sched.h>
+#include <sys/mman.h>
+#include <sys/mount.h>
+#include <sys/sendfile.h>
+#include <sys/stat.h>
+#include <sys/syscall.h>
+#include <unistd.h>
+
+{% if c.syscalls_allowed %}
+static void install_seccomp(void)
+{
+    {% if c.seccomp_default_kill %}
+    scmp_filter_ctx ctx = seccomp_init(SCMP_ACT_KILL);
+    assert(ctx);
+    {% for syscall in c.syscalls_allowed %}
+    printf("Allowing syscall: %s (number %i).\n", "{{ syscall }}", SCMP_SYS({{ syscall }}));
+    assert(seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS({{ syscall }}), 0) == 0);
+    {% endfor %}
+    {% else %}
+    scmp_filter_ctx ctx = seccomp_init(SCMP_ACT_ALLOW);
+    assert(ctx);
+    for (int i = 0; i < 512; i++) {
+        switch (i) {
+            {% for syscall in c.syscalls_allowed %}
+        case SCMP_SYS({{ syscall }}):
+            printf("Allowing syscall: %s (number %i).\n", "{{ syscall }}", SCMP_SYS({{ syscall }}));
+            continue;
+            {% endfor %}
+        }
+        assert(seccomp_rule_add(ctx, SCMP_ACT_KILL, i, 0) == 0);
+    }
+    {% endif %}
+    {% if c.seccomp_add_arch_x86 %}
+    assert(seccomp_arch_add(ctx, SCMP_ARCH_X86) == 0);
+    {% endif %}
+    assert(seccomp_load(ctx) == 0);
+}
+{% endif %}
+
+int main(int argc, char **argv)
+{
+    setvbuf(stdin, NULL, _IONBF, 0);
+    setvbuf(stdout, NULL, _IONBF, 1);
+
+    {% if c.open_file or c.send_file or c.scratch_dir %}
+    assert(argc > 1);
+    {% endif %}
+
+    {% if c.close_fds %}
+    for (int i = 3; i < 10000; i++) {
+        close(i);
+    }
+    {% endif %}
+
+    {% if c.open_file %}
+    {% if not c.allow_flag_path %}
+    assert(strstr(argv[1], "flag") == NULL);
+    {% endif %}
+
+    {% if c.scratch_dir %}
+    puts("Checking your data directory path for shenanigans...");
+    assert(argv[1][0] == '/');
+    assert(strstr(argv[1], ".") == NULL);
+    assert(strstr(argv[1], "flag") == NULL);
+    assert(strstr(argv[1], "root") == NULL);
+    assert(strstr(argv[1], "tmp") == NULL);
+    assert(strstr(argv[1], "var") == NULL);
+    assert(strstr(argv[1], "run") == NULL);
+    assert(strstr(argv[1], "dev") == NULL);
+    assert(strstr(argv[1], "fd") == NULL);
+    if (strstr(argv[1], "home")) {
+        assert(strcmp("/home/hacker", argv[1]) == 0);
+    } else {
+        struct stat statbuf;
+        struct dirent *dent;
+        char dirpath[1024];
+        DIR *dir;
+
+        assert(lstat(argv[1], &statbuf) != -1);
+        assert(S_ISDIR(statbuf.st_mode));
+        dir = opendir(argv[1]);
+        assert(dir);
+        while ((dent = readdir(dir)) != NULL) {
+            if (strcmp(dent->d_name, ".") == 0 || strcmp(dent->d_name, "..") == 0) {
+                continue;
+            }
+            snprintf(dirpath, sizeof(dirpath), "%s/%s", argv[1], dent->d_name);
+            assert(stat(dirpath, &statbuf) != -1);
+            assert(!S_ISDIR(statbuf.st_mode));
+        }
+        closedir(dir);
+    }
+    {% endif %}
+
+    int fd = open(argv[1], O_RDONLY | O_NOFOLLOW);
+    if (fd < 0) {
+        printf("Failed to open the file located at `%s`.\n", argv[1]);
+    } else {
+        printf("Successfully opened the file located at `%s`.\n", argv[1]);
+    }
+    {% endif %}
+
+    {% if c.chroot %}
+    char jail_path[] = "{{ c.chroot_path }}";
+    assert(mkdtemp(jail_path) != NULL);
+    printf("Creating a jail at `%s`.\n", jail_path);
+    assert(chroot(jail_path) == 0);
+    {% endif %}
+
+    {% if c.nsroot %}
+    char new_root[] = "{{ c.chroot_path }}";
+    char old_root[PATH_MAX];
+
+    assert(geteuid() == 0);
+    assert(unshare(CLONE_NEWNS) != -1);
+    assert(mkdtemp(new_root) != NULL);
+    assert(mount(NULL, "/", NULL, MS_REC | MS_PRIVATE, NULL) != -1);
+    assert(mount(new_root, new_root, NULL, MS_BIND, NULL) != -1);
+    snprintf(old_root, sizeof(old_root), "%s/old", new_root);
+    assert(mkdir(old_root, 0777) != -1);
+    assert(syscall(SYS_pivot_root, new_root, old_root) != -1);
+
+    {% for dir in c.mounted_dirs %}
+    assert(mkdir("/{{ dir }}", 0755) != -1);
+    assert(mount("/old/{{ dir }}", "/{{ dir }}", NULL, MS_BIND, NULL) != -1);
+    {% if c.mounted_dirs_ro %}
+    assert(mount(NULL, "/{{ dir }}", NULL, MS_REMOUNT | MS_RDONLY | MS_BIND, NULL) != -1);
+    {% endif %}
+    {% endfor %}
+
+    {% if c.scratch_dir %}
+    char scratch_mount[1024];
+    snprintf(scratch_mount, sizeof(scratch_mount), "/old%s", argv[1]);
+    assert(mkdir("/data", 0755) != -1);
+    assert(mount(scratch_mount, "/data", NULL, MS_BIND, NULL) != -1);
+    assert(mount(NULL, "/data", NULL, MS_REMOUNT | MS_RDONLY | MS_BIND, NULL) != -1);
+    {% endif %}
+
+    {% if c.unmount_old_root %}
+    assert(umount2("/old", MNT_DETACH) != -1);
+    assert(rmdir("/old") != -1);
+    {% endif %}
+
+    setresuid(0, 0, 0);
+    {% endif %}
+
+    {% if c.chroot or c.nsroot %}
+    {% if c.chdir %}
+    assert(chdir("/") == 0);
+    {% endif %}
+
+    int fffd = open("/flag", O_WRONLY | O_CREAT, 0644);
+    assert(fffd >= 0);
+    write(fffd, "{{ c.fake_flag }}", {{ c.fake_flag|length }});
+    close(fffd);
+    {% endif %}
+
+    {% if c.send_file %}
+    printf("Sending the file at `%s` to stdout.\n", argv[1]);
+    sendfile(1, open(argv[1], O_RDONLY), 0, 128);
+    {% endif %}
+
+    {% if c.shellcode %}
+    void *shellcode = mmap((void *)0x1337000, 0x1000, PROT_READ | PROT_WRITE | PROT_EXEC,
+                           MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    assert(shellcode == (void *)0x1337000);
+    printf("Mapped 0x1000 bytes for shellcode at %p!\n", shellcode);
+
+    int shellcode_size = read(0, shellcode, 0x1000);
+    assert(shellcode_size >= 0);
+
+    {% if c.syscalls_allowed %}
+    install_seccomp();
+    {% endif %}
+
+    ((void (*)(void))shellcode)();
+    {% endif %}
+
+    {% if c.shell %}
+    assert(execl("/bin/bash", "/bin/bash", "-p", NULL) != -1);
+    {% endif %}
+
+    return 0;
+}

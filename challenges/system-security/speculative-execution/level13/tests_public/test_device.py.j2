@@ -1,0 +1,4 @@
+{%- set c = namespace() -%}
+{%- set c.proc_path = "/proc/pwncollege" -%}
+{%- set c.do_mmap = false -%}
+{%- include "../../../common/test_speculative_kernel_public.py.j2" -%}

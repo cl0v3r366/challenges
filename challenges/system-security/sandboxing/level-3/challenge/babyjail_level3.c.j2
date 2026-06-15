@@ -1,0 +1,4 @@
+{%- import "../../../common/babyjail_lib.j2" as lib -%}
+{%- set c = namespace() -%}
+{{- lib.chroot_chdir(c) -}}
+{%- include "../../../common/babyjail.c.j2" -%}

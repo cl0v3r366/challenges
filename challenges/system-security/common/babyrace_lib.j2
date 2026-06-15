@@ -1,0 +1,100 @@
+{%- macro defaults(c) -%}
+  {%- set c.walkthrough = false -%}
+  {%- set c.sendfile = false -%}
+  {%- set c.read = false -%}
+  {%- set c.sleep = 0 -%}
+  {%- set c.read_buffer_size = 256 -%}
+  {%- set c.read_size = 0 -%}
+  {%- set c.max_size = 0 -%}
+  {%- set c.win_function = false -%}
+  {%- set c.win_variable = false -%}
+  {%- set c.stack_smash = false -%}
+  {%- set c.check_directory_stat = false -%}
+  {%- set c.check_directory_lstat = false -%}
+  {%- set c.login = false -%}
+  {%- set c.signal = false -%}
+  {%- set c.threaded_server = false -%}
+  {%- set c.message = false -%}
+  {%- set c.atomic_broadcast = false -%}
+  {%- set c.receive_printf = false -%}
+{%- endmacro -%}
+
+{%- macro basic_toctou(c, walkthrough=false) -%}
+  {{- defaults(c) -}}
+  {%- set c.walkthrough = walkthrough -%}
+  {%- set c.sendfile = true -%}
+  {%- set c.sleep = 10000 -%}
+{%- endmacro -%}
+
+{%- macro basic_toctou_no_sleep(c, walkthrough=false) -%}
+  {{- defaults(c) -}}
+  {%- set c.walkthrough = walkthrough -%}
+  {%- set c.sendfile = true -%}
+{%- endmacro -%}
+
+{%- macro win_variable_toctou(c, walkthrough=false) -%}
+  {{- defaults(c) -}}
+  {%- set c.walkthrough = walkthrough -%}
+  {%- set c.read = true -%}
+  {%- set c.read_size = 0x1000 -%}
+  {%- set c.max_size = 256 -%}
+  {%- set c.win_function = true -%}
+  {%- set c.win_variable = true -%}
+{%- endmacro -%}
+
+{%- macro stack_smash_toctou(c, walkthrough=false) -%}
+  {{- defaults(c) -}}
+  {%- set c.walkthrough = walkthrough -%}
+  {%- set c.read = true -%}
+  {%- set c.read_size = 0x1000 -%}
+  {%- set c.max_size = 256 -%}
+  {%- set c.win_function = true -%}
+  {%- set c.stack_smash = true -%}
+{%- endmacro -%}
+
+{%- macro complex_lstat_toctou(c, walkthrough=false) -%}
+  {{- defaults(c) -}}
+  {%- set c.walkthrough = walkthrough -%}
+  {%- set c.sendfile = true -%}
+  {%- set c.check_directory_lstat = true -%}
+{%- endmacro -%}
+
+{%- macro complex_stat_toctou(c, walkthrough=false) -%}
+  {{- defaults(c) -}}
+  {%- set c.walkthrough = walkthrough -%}
+  {%- set c.sendfile = true -%}
+  {%- set c.check_directory_stat = true -%}
+{%- endmacro -%}
+
+{%- macro signal_race(c, walkthrough=false) -%}
+  {{- defaults(c) -}}
+  {%- set c.walkthrough = walkthrough -%}
+  {%- set c.win_function = true -%}
+  {%- set c.login = true -%}
+  {%- set c.signal = true -%}
+{%- endmacro -%}
+
+{%- macro tcp_race(c, walkthrough=false) -%}
+  {{- defaults(c) -}}
+  {%- set c.walkthrough = walkthrough -%}
+  {%- set c.win_function = true -%}
+  {%- set c.login = true -%}
+  {%- set c.threaded_server = true -%}
+{%- endmacro -%}
+
+{%- macro message_race(c, walkthrough=false) -%}
+  {{- defaults(c) -}}
+  {%- set c.walkthrough = walkthrough -%}
+  {%- set c.threaded_server = true -%}
+  {%- set c.message = true -%}
+{%- endmacro -%}
+
+{%- macro message_race_mutex(c, walkthrough=false) -%}
+  {{- message_race(c, walkthrough) -}}
+  {%- set c.atomic_broadcast = true -%}
+{%- endmacro -%}
+
+{%- macro message_race_mutex_printf(c, walkthrough=false) -%}
+  {{- message_race_mutex(c, walkthrough) -}}
+  {%- set c.receive_printf = true -%}
+{%- endmacro -%}

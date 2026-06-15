@@ -1,0 +1,50 @@
+#!/bin/bash
+set -euo pipefail
+
+test -e "/challenge/{{ c.output_name }}"
+{% if c.user_binary %}
+test -u "/challenge/{{ c.user_output_name }}"
+{% endif %}
+{% if c.KASLR %}
+test -e /challenge/.kaslr
+{% endif %}
+{% if c.disable_kvm|default(false) %}
+touch /tmp/pwncollege-disable-kvm
+{% else %}
+rm -f /tmp/pwncollege-disable-kvm
+{% endif %}
+vm restart
+vm exec 'test -e /proc/pwncollege'
+
+{% if c.device_read %}
+vm exec 'dd if=/proc/pwncollege bs=10 count=1 status=none' | grep -q 'password:'
+{% endif %}
+
+{% if c.device_write and not c.shellcode_write and not c.kernel_log %}
+vm exec "su hacker -c 'printf test > /proc/pwncollege'"
+{% endif %}
+
+{% if c.kernel_log %}
+vm exec "su hacker -c 'printf kernel-log-smoke > /proc/pwncollege'"
+{% endif %}
+
+{% if c.shellcode_write %}
+vm exec "python3 - <<'PY'
+open('/proc/pwncollege', 'wb').write(b'\xc3')
+PY"
+{% endif %}
+
+{% if c.device_ioctl %}
+vm exec "python3 - <<'PY'
+import fcntl
+import os
+
+fd = os.open('/proc/pwncollege', os.O_RDONLY)
+try:
+    fcntl.ioctl(fd, 0x123, 0)
+except OSError:
+    pass
+else:
+    raise SystemExit('unexpected ioctl success')
+PY"
+{% endif %}

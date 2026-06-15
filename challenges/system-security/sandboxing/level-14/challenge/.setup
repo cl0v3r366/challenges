@@ -1,0 +1,6 @@
+#!/bin/bash
+set -euo pipefail
+
+gcc -O0 -fno-pie -no-pie -o /challenge/babyjail_level14 /challenge/babyjail_level14.c
+chmod 4755 /challenge/babyjail_level14
+rm -f /challenge/babyjail_level14.c

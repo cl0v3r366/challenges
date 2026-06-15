@@ -1,0 +1,138 @@
+{%- macro defaults(c, random, walkthrough=false) -%}
+  {%- set c.walkthrough = walkthrough -%}
+  {%- set c.device_permissions = "0666" -%}
+  {%- set c.password = false -%}
+  {%- set c.device_read = false -%}
+  {%- set c.device_write = false -%}
+  {%- set c.device_ioctl = false -%}
+  {%- set c.load_flag = false -%}
+  {%- set c.state_machine = false -%}
+  {%- set c.log_flag = false -%}
+  {%- set c.win_function = false -%}
+  {%- set c.call_function = false -%}
+  {%- set c.shellcode_write = false -%}
+  {%- set c.shellcode_ioctl = false -%}
+  {%- set c.kernel_log = false -%}
+  {%- set c.KASLR = false -%}
+  {%- set c.user_binary = false -%}
+  {%- set c.user_load_flag = false -%}
+  {%- set c.user_load_flag_hang = false -%}
+  {%- set c.user_delete_flag = false -%}
+  {%- set c.user_open_device = true -%}
+  {%- set c.user_device_path = "/proc/pwncollege" -%}
+  {%- set c.bin_padding = random.randrange(0x10, 0x1000) -%}
+{%- endmacro -%}
+
+{%- macro draw_password(c, random, size=16) -%}
+  {%- set alphabet = "abcdefghijklmnopqrstuvwxyz" -%}
+  {%- set letters = [] -%}
+  {%- for _ in range(size) -%}
+    {%- set _ = letters.append(alphabet[random.randrange(alphabet|length)]) -%}
+  {%- endfor -%}
+  {%- set c.password = true -%}
+  {%- set c.input_size = size -%}
+  {%- set c.input_solution = letters|join -%}
+{%- endmacro -%}
+
+{%- macro crackme(c, random, walkthrough=false) -%}
+  {{- defaults(c, random, walkthrough) -}}
+  {%- set c.solve = "password_read" -%}
+  {{- draw_password(c, random) -}}
+  {%- set c.device_read = true -%}
+  {%- set c.device_write = true -%}
+  {%- set c.load_flag = true -%}
+  {%- set c.state_machine = true -%}
+{%- endmacro -%}
+
+{%- macro crackme_printk(c, random, walkthrough=false) -%}
+  {{- defaults(c, random, walkthrough) -}}
+  {%- set c.solve = "password_dmesg" -%}
+  {{- draw_password(c, random) -}}
+  {%- set c.device_write = true -%}
+  {%- set c.load_flag = true -%}
+  {%- set c.log_flag = true -%}
+{%- endmacro -%}
+
+{%- macro crackme_privesc(c, random, walkthrough=false) -%}
+  {{- defaults(c, random, walkthrough) -}}
+  {%- set c.solve = "password_write_flag" -%}
+  {{- draw_password(c, random) -}}
+  {%- set c.device_write = true -%}
+  {%- set c.win_function = true -%}
+{%- endmacro -%}
+
+{%- macro crackme_ioctl(c, random, walkthrough=false) -%}
+  {{- defaults(c, random, walkthrough) -}}
+  {%- set c.solve = "password_ioctl_flag" -%}
+  {{- draw_password(c, random) -}}
+  {%- set c.device_ioctl = true -%}
+  {%- set c.win_function = true -%}
+{%- endmacro -%}
+
+{%- macro call_addr(c, random, walkthrough=false) -%}
+  {{- defaults(c, random, walkthrough) -}}
+  {%- set c.solve = "call_win_addr" -%}
+  {%- set c.device_ioctl = true -%}
+  {%- set c.call_function = true -%}
+  {%- set c.win_function = true -%}
+{%- endmacro -%}
+
+{%- macro shellcode_privesc(c, random, walkthrough=false) -%}
+  {{- defaults(c, random, walkthrough) -}}
+  {%- set c.solve = "write_shellcode_flag" -%}
+  {%- set c.device_write = true -%}
+  {%- set c.shellcode_write = true -%}
+{%- endmacro -%}
+
+{%- macro shellcode_ioctl_struct(c, random, walkthrough=false) -%}
+  {{- defaults(c, random, walkthrough) -}}
+  {%- set c.solve = "ioctl_shellcode_flag" -%}
+  {%- set c.device_ioctl = true -%}
+  {%- set c.shellcode_ioctl = true -%}
+{%- endmacro -%}
+
+{%- macro interaction(c, random, walkthrough=false) -%}
+  {{- defaults(c, random, walkthrough) -}}
+  {%- set c.solve = "userspace_interaction" -%}
+  {%- set c.device_permissions = "0600" -%}
+  {%- set c.device_write = true -%}
+  {%- set c.shellcode_write = true -%}
+  {%- set c.user_binary = true -%}
+{%- endmacro -%}
+
+{%- macro pwn_func_ptr(c, random, walkthrough=false) -%}
+  {{- defaults(c, random, walkthrough) -}}
+  {%- set c.solve = "pwn_func_ptr" -%}
+  {%- set c.device_write = true -%}
+  {%- set c.kernel_log = true -%}
+{%- endmacro -%}
+
+{%- macro pwn_func_ptr_kaslr(c, random, walkthrough=false) -%}
+  {{- pwn_func_ptr(c, random, walkthrough) -}}
+  {%- set c.solve = "pwn_func_ptr_kaslr" -%}
+  {%- set c.KASLR = true -%}
+{%- endmacro -%}
+
+{%- macro delete_flag_hang(c, random, walkthrough=false) -%}
+  {{- defaults(c, random, walkthrough) -}}
+  {%- set c.solve = "delete_flag_hang" -%}
+  {%- set c.device_permissions = "0600" -%}
+  {%- set c.device_write = true -%}
+  {%- set c.shellcode_write = true -%}
+  {%- set c.user_binary = true -%}
+  {%- set c.user_load_flag = true -%}
+  {%- set c.user_load_flag_hang = true -%}
+  {%- set c.user_delete_flag = true -%}
+{%- endmacro -%}
+
+{%- macro delete_flag(c, random, walkthrough=false) -%}
+  {{- defaults(c, random, walkthrough) -}}
+  {%- set c.solve = "delete_flag" -%}
+  {%- set c.device_permissions = "0600" -%}
+  {%- set c.device_write = true -%}
+  {%- set c.shellcode_write = true -%}
+  {%- set c.user_binary = true -%}
+  {%- set c.user_load_flag = true -%}
+  {%- set c.user_load_flag_hang = false -%}
+  {%- set c.user_delete_flag = true -%}
+{%- endmacro -%}

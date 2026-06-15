@@ -1,0 +1,11 @@
+{% extends "../../../../common/Dockerfile.j2" %}
+{% block additional_packages %}gcc binutils{% endblock %}
+{% block before_copy %}RUN echo sandbox-level-18-v2 > /etc/pwn_sandbox_level{% endblock %}
+{% block setup %}
+RUN <<END
+    set -e
+    gcc -O0 -fno-pie -no-pie -o /challenge/babyjail_level18 /challenge/babyjail_level18.c
+    chmod 4755 /challenge/babyjail_level18
+    rm -f /challenge/Dockerfile /challenge/.setup /challenge/babyjail_level18.c
+END
+{% endblock %}

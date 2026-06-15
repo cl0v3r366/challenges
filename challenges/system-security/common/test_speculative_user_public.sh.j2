@@ -1,0 +1,29 @@
+#!/bin/bash
+set -euo pipefail
+
+binary="/challenge/{{ c.binary }}"
+test -u "$binary"
+
+workdir="$(mktemp -d)"
+cat > "$workdir/helper.c" <<'EOF'
+#include <semaphore.h>
+#include <stdint.h>
+#include <unistd.h>
+
+int main(void) {
+    unsigned char *base = (unsigned char *)0x1337000;
+    sem_t *sem = (sem_t *)base;
+    int *index = (int *)(sem + 1);
+    *index = 0;
+    sem_post(sem);
+    return 0;
+}
+EOF
+
+gcc -O2 -pthread -o "$workdir/helper" "$workdir/helper.c"
+set +e
+timeout 20 "$binary" "$workdir/helper" > "$workdir/out"
+status=$?
+set -e
+[ "$status" -eq 0 ] || [ "$status" -eq 124 ]
+grep -Eq 'shared memory|Pinning processes|Waiting' "$workdir/out"

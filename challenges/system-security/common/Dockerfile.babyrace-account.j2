@@ -1,0 +1,13 @@
+{% extends "../../common/Dockerfile.j2" %}
+{% block additional_packages %}gcc libgcc-s1{% endblock %}
+{% block before_copy %}RUN echo {{ cache_key }} > /etc/pwn_race_level{% endblock %}
+{% block setup %}
+RUN <<END
+    set -e
+    mkdir -p /home/hacker
+    chown 1000:1000 /home/hacker
+    gcc -O0 -fstack-protector-all -fcf-protection=full -o /challenge/{{ binary_name }} /challenge/{{ binary_name }}.c -pthread
+    chmod 4755 /challenge/{{ binary_name }}
+    rm -f /challenge/Dockerfile /challenge/{{ binary_name }}.c
+END
+{% endblock %}

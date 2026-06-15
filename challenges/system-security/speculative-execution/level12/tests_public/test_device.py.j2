@@ -1,0 +1,4 @@
+{%- set c = namespace() -%}
+{%- set c.proc_path = "/proc/ypu" -%}
+{%- set c.do_mmap = true -%}
+{%- include "../../../common/test_speculative_kernel_public.py.j2" -%}

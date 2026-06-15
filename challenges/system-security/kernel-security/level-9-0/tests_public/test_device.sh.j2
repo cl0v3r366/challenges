@@ -1,0 +1,5 @@
+{%- import "../../../common/babykernel_lib.j2" as lib -%}
+{%- set c = namespace() -%}
+{{- lib.pwn_func_ptr(c, random, true) -}}
+{%- set c.output_name = "babykernel_level9.0.ko" -%}
+{%- include "../../../common/test_babykernel_public.sh.j2" -%}

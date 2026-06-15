@@ -1,0 +1,8 @@
+#!/bin/bash
+set -euo pipefail
+
+# level-11-1 build inputs
+build-kernel-module /challenge/babykernel_level11_1.c /challenge/babykernel_level11.1.ko
+gcc -O0 -fno-pie -no-pie -o /challenge/babykernel_level11.1 /challenge/babykernel_level11_1_userspace.c -lseccomp -pthread
+chmod 4755 /challenge/babykernel_level11.1
+rm -f /challenge/babykernel_level11_1.c /challenge/babykernel_level11_1_userspace.c

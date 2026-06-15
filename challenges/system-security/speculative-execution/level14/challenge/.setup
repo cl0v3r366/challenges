@@ -1,0 +1,6 @@
+#!/bin/bash
+set -euo pipefail
+
+chown -R 0:0 /challenge
+find /challenge -maxdepth 1 -name '*.ko' -type f -exec chmod 0644 {} +
+[ ! -f /challenge/babyarch_molten_walk ] || chmod 4755 /challenge/babyarch_molten_walk

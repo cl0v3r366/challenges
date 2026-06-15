@@ -1,0 +1,102 @@
+#define _GNU_SOURCE
+#include <assert.h>
+#include <fcntl.h>
+#include <seccomp.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/mman.h>
+#include <sys/sendfile.h>
+#include <sys/socket.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+static int child_pid;
+
+static void cleanup(int signal_number)
+{
+    (void)signal_number;
+    kill(child_pid, SIGKILL);
+    kill(getpid(), SIGKILL);
+}
+
+static void install_seccomp(void)
+{
+    scmp_filter_ctx ctx = seccomp_init(SCMP_ACT_KILL);
+    assert(ctx);
+    printf("Allowing syscall: read (number %i).\n", SCMP_SYS(read));
+    assert(seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(read), 0) == 0);
+    printf("Allowing syscall: write (number %i).\n", SCMP_SYS(write));
+    assert(seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(write), 0) == 0);
+    printf("Allowing syscall: exit (number %i).\n", SCMP_SYS(exit));
+    assert(seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(exit), 0) == 0);
+    assert(seccomp_load(ctx) == 0);
+}
+
+int main(void)
+{
+    setvbuf(stdin, NULL, _IONBF, 0);
+    setvbuf(stdout, NULL, _IONBF, 1);
+
+    for (int i = 3; i < 10000; i++) {
+        close(i);
+    }
+
+    int file_descriptors[2];
+    assert(socketpair(AF_UNIX, SOCK_STREAM, 0, file_descriptors) == 0);
+    int parent_socket = file_descriptors[0];
+    int child_socket = file_descriptors[1];
+
+    printf("The parent side of the socketpair is FD %d.\n", parent_socket);
+    printf("The child side of the socketpair is FD %d.\n", child_socket);
+
+    alarm(1);
+    signal(SIGALRM, cleanup);
+
+    child_pid = fork();
+    if (!child_pid) {
+        close(0);
+        close(1);
+        close(2);
+        close(parent_socket);
+
+        void *shellcode = mmap((void *)0x1337000, 0x1000, PROT_READ | PROT_WRITE | PROT_EXEC,
+                               MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        assert(shellcode == (void *)0x1337000);
+
+        install_seccomp();
+
+        read(child_socket, shellcode, 0x1000);
+        write(child_socket, "print_msg:Executing shellcode!", 128);
+        ((void (*)(void))shellcode)();
+    }
+
+    char shellcode[0x1000];
+    read(0, shellcode, sizeof(shellcode));
+    write(parent_socket, shellcode, sizeof(shellcode));
+
+    while (1) {
+        char command[128] = { 0 };
+        int command_size = read(parent_socket, command, sizeof(command));
+        command[9] = '\0';
+
+        char *command_argument = &command[10];
+        int command_argument_size = command_size - 10;
+
+        printf("The parent received command `%.10s` with an argument of %d bytes from the child.\n",
+               command, command_argument_size);
+
+        if (strcmp(command, "print_msg") == 0) {
+            puts(command_argument);
+        } else if (strcmp(command, "read_file") == 0) {
+            sendfile(parent_socket, open(command_argument, O_RDONLY), 0, 128);
+        } else {
+            puts("Error: unknown command!");
+            break;
+        }
+    }
+
+    waitpid(child_pid, NULL, 0);
+    return 0;
+}

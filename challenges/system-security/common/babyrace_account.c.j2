@@ -1,0 +1,270 @@
+#define _GNU_SOURCE
+#include <arpa/inet.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <signal.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
+{% if c.threaded_server %}
+__thread FILE *thread_stdin;
+__thread FILE *thread_stdout;
+
+#define scanf(...) fscanf(thread_stdin, __VA_ARGS__)
+#define printf(...) fprintf(thread_stdout, __VA_ARGS__)
+{% endif %}
+
+{% if c.win_function %}
+static void win(void)
+{
+    char flag[256];
+    int flag_fd = open("/flag", O_RDONLY);
+    if (flag_fd < 0) {
+        printf("\n  ERROR: Failed to open the flag -- %s!\n", strerror(errno));
+        exit(1);
+    }
+    int flag_length = read(flag_fd, flag, sizeof(flag));
+    if (flag_length <= 0) {
+        printf("\n  ERROR: Failed to read the flag -- %s!\n", strerror(errno));
+        exit(1);
+    }
+    {% if c.threaded_server %}
+    write(fileno(thread_stdout), flag, flag_length);
+    {% else %}
+    write(1, flag, flag_length);
+    {% endif %}
+    printf("\n\n");
+}
+{% endif %}
+
+{% if c.login %}
+unsigned int privilege_level = 0;
+{% endif %}
+
+{% if c.signal %}
+static void timeout_handler(int signum)
+{
+    (void) signum;
+    puts("Logging out due to timeout.");
+    privilege_level = 0;
+}
+{% endif %}
+
+{% if c.message %}
+char global_message[1024];
+
+{% if c.atomic_broadcast %}
+sem_t global_message_mutex;
+{% endif %}
+
+static void broadcast_message(char *message, int length)
+{
+    {% if c.atomic_broadcast %}
+    sem_wait(&global_message_mutex);
+    {% endif %}
+
+    for (int i = 0; i < length; i++) {
+        {% if c.walkthrough %}
+        printf("[*] global_message[%d] = message[%d]\n", i, i);
+        {% endif %}
+        {% if c.walkthrough %}
+        printf("Paused (press enter to continue)\n");
+        char pause_buffer[8];
+        scanf("%7s", pause_buffer);
+        {% endif %}
+        global_message[i] = message[i];
+    }
+    global_message[length] = '\0';
+
+    {% if c.atomic_broadcast %}
+    sem_post(&global_message_mutex);
+    {% endif %}
+}
+{% endif %}
+
+static int challenge(int argc, char **argv, char **envp)
+{
+    (void) argc;
+    (void) argv;
+    (void) envp;
+    char response[128];
+
+    {% if c.signal %}
+    signal(SIGALRM, timeout_handler);
+    {% endif %}
+
+    while (true) {
+        {% if c.login %}
+        printf("Privilege level: %d\n", privilege_level);
+        printf("[*] Function (login/logout/win_authed/quit): \n");
+        {% elif c.message %}
+        printf("[*] Function (send_message/send_redacted_flag/receive_message/quit): \n");
+        {% endif %}
+
+        scanf("%127s", response);
+
+        if (strcmp(response, "quit") == 0) {
+            break;
+        }
+
+        {% if c.login %}
+        else if (strcmp(response, "login") == 0) {
+            {% if c.walkthrough %}
+            printf("Privilege level set to 1.\n");
+            printf("Paused (press enter to continue)\n");
+            char pause_buffer[8];
+            scanf("%7s", pause_buffer);
+            {% endif %}
+
+            privilege_level = 1;
+
+            {% if c.signal %}
+            {% if c.walkthrough %}
+            printf("You will be logged out in 10 minutes!\n");
+            {% endif %}
+            alarm(600);
+            {% endif %}
+        }
+
+        else if (strcmp(response, "logout") == 0) {
+            if (privilege_level != 0) {
+                printf("Dropping one privilege level.\n");
+
+                {% if c.walkthrough %}
+                printf("Paused (press enter to continue)\n");
+                char pause_buffer[8];
+                scanf("%7s", pause_buffer);
+                {% endif %}
+
+                privilege_level--;
+            } else {
+                {% if c.walkthrough %}
+                printf("You are not logged in!\n");
+                {% endif %}
+            }
+        }
+
+        else if (strcmp(response, "win_authed") == 0) {
+            if (privilege_level == 0) {
+                printf("You are not logged in!\n");
+            } else if (privilege_level == 1) {
+                printf("Your privilege level is too low!\n");
+            } else {
+                win();
+            }
+        }
+        {% elif c.message %}
+        else if (strcmp(response, "send_message") == 0) {
+            printf("Message: ");
+            scanf("%127s", response);
+            printf("\n");
+            broadcast_message(response, strlen(response));
+        }
+
+        else if (strcmp(response, "send_redacted_flag") == 0) {
+            char redacted_flag[512] = "REDACTED: ";
+            int flag_length = read(open("/flag", O_RDONLY), redacted_flag + 11, 256);
+            broadcast_message(redacted_flag, flag_length + 11);
+        }
+
+        else if (strcmp(response, "receive_message") == 0) {
+            {% if c.receive_printf %}
+            printf("Message: %s", global_message);
+            {% else %}
+            printf("Message: ");
+            write(fileno(thread_stdout), global_message, strlen(global_message));
+            {% endif %}
+        }
+        {% endif %}
+
+        else {
+            printf("Unrecognized choice!\n");
+            continue;
+        }
+    }
+
+    return 0;
+}
+
+{% if c.threaded_server %}
+struct thread_args {
+    int client_fd;
+    int argc;
+    char **argv;
+    char **envp;
+};
+
+static void *run_thread(void *arg)
+{
+    struct thread_args *thread_args = arg;
+    int client_fd = thread_args->client_fd;
+    int argc = thread_args->argc;
+    char **argv = thread_args->argv;
+    char **envp = thread_args->envp;
+    free(thread_args);
+
+    thread_stdin = fdopen(client_fd, "r");
+    thread_stdout = fdopen(client_fd, "w");
+    setvbuf(thread_stdin, NULL, _IONBF, 0);
+    setvbuf(thread_stdout, NULL, _IONBF, 0);
+    challenge(argc, argv, envp);
+    fclose(thread_stdin);
+    fclose(thread_stdout);
+    return NULL;
+}
+
+static void sigpipe_handler(int signum)
+{
+    (void) signum;
+    pthread_exit(0);
+}
+
+#undef scanf
+#undef printf
+{% endif %}
+
+int main(int argc, char **argv, char **envp)
+{
+    setvbuf(stdin, NULL, _IONBF, 0);
+    setvbuf(stdout, NULL, _IONBF, 0);
+
+    {% if c.threaded_server %}
+    puts("This challenge is listening for connections on TCP port 1337.");
+    puts("The challenge supports unlimited parallel connections.");
+
+    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    int server_opt = 1;
+    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &server_opt, sizeof(server_opt));
+    struct sockaddr_in server_addr;
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_port = htons(1337);
+    bind(server_fd, (struct sockaddr *) &server_addr, sizeof(server_addr));
+    listen(server_fd, 1);
+
+    signal(SIGPIPE, sigpipe_handler);
+
+    {% if c.atomic_broadcast %}
+    sem_init(&global_message_mutex, 0, 1);
+    {% endif %}
+
+    while (true) {
+        int client_fd = accept(server_fd, NULL, NULL);
+        pthread_t thread;
+        struct thread_args *thread_args = malloc(sizeof(*thread_args));
+        thread_args->client_fd = client_fd;
+        thread_args->argc = argc;
+        thread_args->argv = argv;
+        thread_args->envp = envp;
+        pthread_create(&thread, NULL, run_thread, thread_args);
+    }
+    {% else %}
+    challenge(argc, argv, envp);
+    {% endif %}
+}

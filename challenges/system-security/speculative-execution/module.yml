@@ -1,0 +1,90 @@
+id: speculative-execution
+name: Microarchitecture Exploitation
+description: |-
+  Modern  CPUs are impressive feats of engineering effort.  Consistently offering performance improvements every generation, but how?
+  This module explores security vulnerabilities that can lurk hidden, below the assembly, in CPU architecture itself!
+
+  Note: Meltdown challenges must be performed inside the VM!
+resources:
+- name: Microarchitecture Exploitation - Below Assembly
+  type: lecture
+  slides: 16Cah3h_ZDTJxPObVxj0KhNGG5wuWh1cOvSrWZiQWJrk
+  playlist: PL-ymxv0nOtqoU92gd9MEX4ABDGW6nvVma
+  video: mMC_vYSHbjI
+- name: Microarchitecture Exploitation - Flush and Reload
+  type: lecture
+  slides: 1L8Hrc3s7OuVUf9c2M_5bMeIx3XZltPhk5DdSclE-lH4
+  playlist: PL-ymxv0nOtqoU92gd9MEX4ABDGW6nvVma
+  video: vh8NxJ7YrO0
+- name: Microarchitecture Exploitation - Meltdown
+  type: lecture
+  slides: 1arCbezSRaEfjquC8pSt8REUBx7KRnpB7_r1vSx-M_yk
+  playlist: PL-ymxv0nOtqoU92gd9MEX4ABDGW6nvVma
+  video: 6wCfyw4hJJU
+- name: Microarchitecture Exploitation - Spectre
+  type: lecture
+  slides: 1PQyr2D6IsFOUs0sXYbYtcRQGGTMMJNb42uKDOlLT6vQ
+  playlist: PL-ymxv0nOtqoU92gd9MEX4ABDGW6nvVma
+  video: P0OGmS5vKjk
+- type: challenge
+  id: babyarch-memflag
+  name: Shared Memory 1
+  description: Get started with interacting with processes via shared memory.
+  required: false
+- type: challenge
+  id: babyarch-memflagsem
+  name: Shared Memory 2
+  description: Get started with interacting with processes via shared memory.
+  required: false
+- type: challenge
+  id: babyarch-parseonepage
+  name: Baby Spectre 1
+  description: Get started with a binary that side-channels itself!
+- type: challenge
+  id: babyarch-parsemultipage
+  name: Baby Spectre 2
+  description: A binary that side-channels itself, now using multiple pages.
+- type: challenge
+  id: babyarch-measuretiming
+  name: Baby Spectre 3
+  description: Measure memory access timings to leak the flag via a side-channel.
+- type: challenge
+  id: babyarch-writeall
+  name: Baby Spectre 4
+  description: Perform a full flush and reload side-channel attack!
+- type: challenge
+  id: babyarch-speculate
+  name: Baby Spectre 5
+  description: This binary never reads the flag bytes.. or does it?
+- type: challenge
+  id: level7-1
+  name: Prefetch Peek
+  description: Locate the flag in memory using shellcode after all references to it have been DESTROYED, you will only have access to the "exit" system call. You will need a creative way of locating the flag's address in your process!
+- type: challenge
+  id: level8
+  name: Spooky Spectre 1
+  description: Use a speculative bounds check bypass which accesses a page mapped in userspace to leak the flag.
+- type: challenge
+  id: level9
+  name: Spooky Spectre 2
+  description: Use a speculative indirect call which accesses a page mapped in userspace to leak the flag.
+- type: challenge
+  id: level10
+  name: Yan85 Reloaded
+  description: Use a cache side channel triggered through y85 shellcode which accesses a page mapped in userspace to leak the flag.
+- type: challenge
+  id: level11
+  name: Ghost in the YPU 1
+  description: Use a Spectre v1 channel triggered through y85 shellcode which accesses a page mapped in userspace to leak the flag.
+- type: challenge
+  id: level12
+  name: Ghost in the YPU 2
+  description: Use a Spectre v2 side channel triggered through y85 shellcode which accesses a page mapped in userspace to leak the flag.
+- type: challenge
+  id: level13
+  name: Molten Access
+  description: Use meltdown to read the flag from the kernel module's memory.  Note - This challenge must be executed inside the VM!
+- type: challenge
+  id: level14
+  name: Molten Walk
+  description: Leak the flag via meltdown from another process after getting the address of its task_struct from the kernel module and using it to find and walk its page tables.  Note - This challenge must be executed inside the VM!

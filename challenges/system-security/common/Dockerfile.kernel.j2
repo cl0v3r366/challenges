@@ -1,0 +1,71 @@
+{%- extends "../../common/Dockerfile.j2" -%}
+
+{%- block default_packages -%}
+python3 python3-pwntools build-essential binutils kmod qemu-system-x86 openssh-client openssh-server iproute2 procps net-tools passwd sudo file gdb bc flex bison libelf-dev libseccomp-dev libcapstone-dev cpio rsync patchelf util-linux
+{%- endblock -%}
+
+{%- block before_copy -%}
+COPY --from=pwncollege/challenge-legacy:latest /opt/linux /opt/linux
+COPY --from=pwncollege/challenge-legacy:latest /usr/lib/libcapstone.so.5 /usr/lib/libcapstone.so.5
+COPY --from=pwncollege/challenge-legacy:latest /lib/x86_64-linux-gnu/ld-2.31.so /opt/pwn.college/legacy-libs/ld-linux-x86-64.so.2
+COPY --from=pwncollege/challenge-legacy:latest /lib/x86_64-linux-gnu/libc-2.31.so /opt/pwn.college/legacy-libs/libc.so.6
+COPY --from=pwncollege/challenge-legacy:latest /lib/x86_64-linux-gnu/libpthread-2.31.so /opt/pwn.college/legacy-libs/libpthread.so.0
+COPY --from=pwncollege/challenge-legacy:latest /lib/x86_64-linux-gnu/libseccomp.so.2.5.1 /opt/pwn.college/legacy-libs/libseccomp.so.2
+
+RUN <<'EOF'
+set -eux
+mkdir -p /opt/pwn.college/vm /run/vm /run/sshd /home/hacker
+chmod 755 /opt/pwn.college/legacy-libs/ld-linux-x86-64.so.2
+if ! getent group hacker >/dev/null 2>&1; then
+    echo 'hacker:x:1000:' >> /etc/group
+fi
+if ! getent passwd hacker >/dev/null 2>&1; then
+    echo 'hacker:x:1000:1000::/home/hacker:/bin/bash' >> /etc/passwd
+fi
+touch /etc/shadow
+if ! grep -q '^hacker:' /etc/shadow; then
+    echo 'hacker::20000:0:99999:7:::' >> /etc/shadow
+fi
+chown 1000:1000 /home/hacker
+passwd -d root
+passwd -d hacker
+ssh-keygen -A
+sed -ri 's/^#?PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+sed -ri 's/^#?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+sed -ri 's/^#?PermitEmptyPasswords.*/PermitEmptyPasswords yes/' /etc/ssh/sshd_config
+EOF
+
+COPY --chmod=6755 <<'VM_SCRIPT_EOF' /opt/pwn.college/vm/vm
+{% include "vm.py.j2" %}
+VM_SCRIPT_EOF
+
+COPY --chmod=755 <<'VM_INIT_EOF' /opt/pwn.college/vm/init
+{% include "vm-init.sh.j2" %}
+VM_INIT_EOF
+
+COPY --chmod=755 <<'BUILD_KERNEL_MODULE_EOF' /usr/local/bin/build-kernel-module
+{% include "build-kernel-module.sh.j2" %}
+BUILD_KERNEL_MODULE_EOF
+
+RUN ln -sf /opt/pwn.college/vm/vm /usr/local/bin/vm
+{%- endblock -%}
+
+{%- block copy -%}
+COPY . /challenge
+COPY --chmod=755 .setup /challenge/.setup.{{ kernel_cache_key|default("kernel-common-v1") }}
+{%- endblock -%}
+
+{%- block after_setup -%}
+COPY --chmod=755 <<'CHALLENGE_INIT_EOF' /challenge/.init
+{% include "challenge-init.sh.j2" %}
+CHALLENGE_INIT_EOF
+{%- endblock -%}
+
+{%- block setup -%}
+RUN <<END
+    set -e
+    setup_script=/challenge/.setup.{{ kernel_cache_key|default("kernel-common-v1") }}
+    [ ! -f "$setup_script" ] || "$setup_script"
+    rm -f /challenge/Dockerfile /challenge/.setup "$setup_script"
+END
+{%- endblock -%}

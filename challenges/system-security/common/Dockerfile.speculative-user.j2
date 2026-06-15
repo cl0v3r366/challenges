@@ -1,0 +1,13 @@
+{%- extends "../../common/Dockerfile.j2" -%}
+
+{%- block default_packages -%}
+python3 build-essential binutils file patchelf nasm libcapstone-dev libseccomp-dev procps util-linux
+{%- endblock -%}
+
+{%- block setup -%}
+RUN <<'END'
+    set -e
+    [ ! -f /challenge/.setup ] || /challenge/.setup
+    rm -f /challenge/Dockerfile /challenge/.setup
+END
+{%- endblock -%}

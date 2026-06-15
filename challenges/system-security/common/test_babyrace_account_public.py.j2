@@ -1,0 +1,136 @@
+#!/usr/bin/env python3
+import os
+import select
+import socket
+import stat
+import subprocess
+import time
+
+BINARY = "/challenge/{{ c.binary }}"
+MODE = "{{ c.mode }}"
+WALKTHROUGH = {{ "True" if c.walkthrough else "False" }}
+PAUSE = b"Paused (press enter to continue)"
+
+
+def read_pipe_until(proc, marker, timeout=5.0):
+    data = b""
+    deadline = time.time() + timeout
+    fd = proc.stdout.fileno()
+    while time.time() < deadline:
+        ready, _, _ = select.select([fd], [], [], 0.1)
+        if ready:
+            chunk = os.read(fd, 4096)
+            if not chunk:
+                break
+            data += chunk
+            if marker in data:
+                return data
+    raise AssertionError(f"did not see {marker!r}; got {data!r}")
+
+
+def stop_proc(proc):
+    proc.terminate()
+    try:
+        proc.wait(timeout=1)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait(timeout=1)
+
+
+def start_server():
+    proc = subprocess.Popen([BINARY], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    try:
+        for _ in range(100):
+            try:
+                sock = socket.create_connection(("127.0.0.1", 1337), timeout=0.1)
+                sock.setblocking(False)
+                time.sleep(0.05)
+                drain_socket(sock)
+                return proc, sock
+            except OSError:
+                if proc.poll() is not None:
+                    raise AssertionError(proc.stdout.read())
+                time.sleep(0.05)
+        raise AssertionError("server did not start")
+    except Exception:
+        stop_proc(proc)
+        raise
+
+
+def drain_socket(sock, timeout=0.05):
+    data = b""
+    while True:
+        ready, _, _ = select.select([sock], [], [], timeout)
+        if not ready:
+            return data
+        try:
+            chunk = sock.recv(4096)
+        except BlockingIOError:
+            return data
+        if not chunk:
+            return data
+        data += chunk
+        timeout = 0
+
+
+def wait_socket(sock, marker, timeout=5.0):
+    data = b""
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        data += drain_socket(sock, 0.1)
+        if marker in data:
+            return data
+    raise AssertionError(f"did not see {marker!r}; got {data!r}")
+
+
+mode = os.stat(BINARY).st_mode
+assert mode & stat.S_ISUID, f"{BINARY} is not SUID"
+
+if MODE == "signal":
+    proc = subprocess.Popen([BINARY], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0)
+    try:
+        read_pipe_until(proc, b"Function")
+        proc.stdin.write(b"login\n")
+        if WALKTHROUGH:
+            read_pipe_until(proc, PAUSE)
+            proc.stdin.write(b"x\n")
+        read_pipe_until(proc, b"Function")
+        proc.stdin.write(b"win_authed\nquit\n")
+        output = read_pipe_until(proc, b"too low")
+        assert b"pwn.college{" not in output
+    finally:
+        stop_proc(proc)
+elif MODE == "tcp":
+    proc, sock = start_server()
+    try:
+        sock.sendall(b"login\n")
+        if WALKTHROUGH:
+            wait_socket(sock, PAUSE)
+            sock.sendall(b"x\n")
+        wait_socket(sock, b"Function")
+        sock.sendall(b"win_authed\n")
+        output = wait_socket(sock, b"too low")
+        assert b"pwn.college{" not in output
+    finally:
+        sock.close()
+        stop_proc(proc)
+elif MODE == "message":
+    proc, sock = start_server()
+    try:
+        sock.sendall(b"send_message\n")
+        wait_socket(sock, b"Message: ")
+        sock.sendall(b"hello\n")
+        if WALKTHROUGH:
+            for _ in b"hello":
+                wait_socket(sock, PAUSE)
+                sock.sendall(b"x\n")
+        wait_socket(sock, b"Function")
+        sock.sendall(b"receive_message\n")
+        output = wait_socket(sock, b"hello")
+        assert b"hello" in output
+        assert b"pwn.college{" not in output
+    finally:
+        sock.close()
+        stop_proc(proc)
+else:
+    raise AssertionError(f"unknown public test mode: {MODE}")

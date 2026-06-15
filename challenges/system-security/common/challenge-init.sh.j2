@@ -1,0 +1,9 @@
+#!/bin/bash
+set -euo pipefail
+
+mkdir -p /run/vm /run/sshd /home/hacker
+chown 1000:1000 /home/hacker || true
+
+if find /challenge -name '*.ko' -print -quit | grep -q .; then
+    vm start
+fi

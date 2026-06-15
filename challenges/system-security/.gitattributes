@@ -1,0 +1,2 @@
+**/tests_private/** filter=git-crypt-system-security diff=git-crypt-system-security
+common/test_*_private* filter=git-crypt-system-security diff=git-crypt-system-security

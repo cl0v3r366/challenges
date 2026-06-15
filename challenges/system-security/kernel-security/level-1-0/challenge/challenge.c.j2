@@ -1,0 +1,4 @@
+{%- import "../../../common/babykernel_lib.j2" as lib -%}
+{%- set c = namespace() -%}
+{{- lib.crackme(c, random, true) -}}
+{%- include "../../../common/babykernel.c.j2" -%}

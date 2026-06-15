@@ -1,0 +1,5 @@
+{%- import "../../../common/babykernel_lib.j2" as lib -%}
+{%- set c = namespace() -%}
+{{- lib.shellcode_ioctl_struct(c, random, false) -}}
+{%- set c.output_name = "babykernel_level7.1.ko" -%}
+{%- include "../../../common/test_babykernel_public.sh.j2" -%}

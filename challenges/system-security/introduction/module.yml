@@ -1,0 +1,15 @@
+id: introduction
+name: Introduction
+description: Welcome to Computer Systems Security! This module will introduce you to the course and the concepts we'll be covering.
+resources:
+- name: 'Introduction: What is Computer Systems Security'
+  type: lecture
+  video: bJTThdqui0g
+  playlist: PL-ymxv0nOtqrxUaIefx0qEC7_155oPEb7
+  slides: 1YlTxeZg03P234EgG4E4JNGcit6LZovAxfYGL1YSLwfc
+- name: Further Reading
+  type: markdown
+  content: |-
+    - An awesome intro series that covers some of the fundamentals from [LiveOverflow](https://www.youtube.com/watch?v=iyAyN3GFM7A&list=PLhixgUqwRTjxglIswKp9mpkfPNfHkzyeN&index=1).
+    - Phineas Fisher's [writeup](https://theanarchistlibrary.org/library/phineas-fisher-hackback-a-diy-guide-i) of the hacking team disclosure (discussed in the What is Computer Systems Security video). Originally posted on pastebin by Phineas Fisher, but since removed.
+    - [Some more (mirrored) writeups](https://github.com/Alekseyyy/phineas-philes) from Phineas Fisher, for the curious.

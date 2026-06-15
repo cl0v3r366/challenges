@@ -1,0 +1,21 @@
+#!/bin/bash
+set -euo pipefail
+
+src="${1:-/challenge/challenge.c}"
+out="${2:-/challenge/challenge.ko}"
+module_name="${3:-challenge}"
+workdir="$(mktemp -d)"
+trap 'rm -rf "$workdir"' EXIT
+
+cp "$src" "$workdir/$module_name.c"
+cat > "$workdir/Makefile" <<EOF
+obj-m += $module_name.o
+
+all:
+	make -C /opt/linux/linux-5.4 M=$workdir modules
+clean:
+	make -C /opt/linux/linux-5.4 M=$workdir clean
+EOF
+
+make -C "$workdir"
+cp "$workdir/$module_name.ko" "$out"

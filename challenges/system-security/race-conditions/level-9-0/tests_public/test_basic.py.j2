@@ -1,0 +1,6 @@
+{%- import "../../../common/babyrace_lib.j2" as lib -%}
+{%- set c = namespace() -%}
+{%- set c.binary = "babyrace_level9_0" -%}
+{%- set c.mode = "message" -%}
+{{- lib.message_race(c, true) -}}
+{%- include "../../../common/test_babyrace_account_public.py.j2" -%}

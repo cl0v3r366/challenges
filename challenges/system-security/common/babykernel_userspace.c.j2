@@ -1,0 +1,97 @@
+#define _GNU_SOURCE
+#include <assert.h>
+#include <fcntl.h>
+#include <seccomp.h>
+#include <semaphore.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/mman.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+{% if c.user_load_flag and c.user_load_flag_hang %}
+static char flag_storage[0x100];
+{% endif %}
+
+{% if c.user_load_flag %}
+static void load_flag(void)
+{
+    {% if c.user_load_flag_hang %}
+    sem_t *sem = mmap(0, 0x1000, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    assert(sem != MAP_FAILED);
+    assert(sem_init(sem, 1, 0) == 0);
+    {% else %}
+    char *flag_storage = mmap(0, 0x1000, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    assert(flag_storage != MAP_FAILED);
+    {% endif %}
+
+    pid_t pid = fork();
+    assert(pid >= 0);
+    if (pid == 0) {
+        int flag_fd = open("/flag", O_RDONLY);
+        if (flag_fd < 0) {
+            exit(1);
+        }
+        read(flag_fd, flag_storage, 0x100);
+        close(flag_fd);
+
+        {% if c.user_load_flag_hang %}
+        sem_post(sem);
+        for (;;) {
+            sleep(1);
+        }
+        {% else %}
+        exit(0);
+        {% endif %}
+    }
+
+    {% if c.user_load_flag_hang %}
+    sem_wait(sem);
+    {% else %}
+    waitpid(pid, NULL, 0);
+    {% endif %}
+}
+{% endif %}
+
+static void install_seccomp(void)
+{
+    scmp_filter_ctx ctx = seccomp_init(SCMP_ACT_KILL);
+    assert(ctx);
+    assert(seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(write), 0) == 0);
+    assert(seccomp_load(ctx) == 0);
+}
+
+int main(void)
+{
+    setvbuf(stdout, NULL, _IONBF, 0);
+
+    {% if c.user_load_flag %}
+    load_flag();
+    {% endif %}
+
+    {% if c.user_delete_flag %}
+    unlink("/flag");
+    puts("The flag has been deleted!");
+    {% endif %}
+
+    {% if c.user_open_device %}
+    int device_fd = open("{{ c.user_device_path }}", O_RDWR);
+    printf("Opened `{{ c.user_device_path }}` on fd %d.\n", device_fd);
+    assert(device_fd >= 0);
+    {% endif %}
+
+    void *shellcode = mmap((void *)0x31337000, 0x1000, PROT_READ | PROT_WRITE | PROT_EXEC,
+                           MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    assert(shellcode == (void *)0x31337000);
+    printf("Mapped 0x1000 bytes for shellcode at %p!\n", shellcode);
+
+    int shellcode_size = read(0, shellcode, 0x1000);
+    assert(shellcode_size >= 0);
+
+    install_seccomp();
+    ((void (*)(void))shellcode)();
+
+    return 0;
+}

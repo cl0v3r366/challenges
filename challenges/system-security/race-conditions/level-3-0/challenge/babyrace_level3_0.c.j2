@@ -1,0 +1,4 @@
+{%- import "../../../common/babyrace_lib.j2" as lib -%}
+{%- set c = namespace() -%}
+{{- lib.win_variable_toctou(c, true) -}}
+{%- include "../../../common/babyrace_file.c.j2" -%}

@@ -1,0 +1,4 @@
+{%- import "../../../common/babykernel_lib.j2" as lib -%}
+{%- set c = namespace() -%}
+{{- lib.delete_flag_hang(c, random, false) -}}
+{%- include "../../../common/babykernel.c.j2" -%}

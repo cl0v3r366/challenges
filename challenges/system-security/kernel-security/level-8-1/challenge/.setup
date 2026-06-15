@@ -1,0 +1,7 @@
+#!/bin/bash
+set -euo pipefail
+
+build-kernel-module /challenge/challenge.c /challenge/babykernel_level8.1.ko
+gcc -O0 -fno-pie -no-pie -o /challenge/babykernel_level8.1 /challenge/userspace.c -lseccomp -pthread
+chmod 4755 /challenge/babykernel_level8.1
+rm -f /challenge/challenge.c /challenge/userspace.c

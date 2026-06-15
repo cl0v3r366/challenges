@@ -1,0 +1,4 @@
+{%- import "../../../common/babyrace_lib.j2" as lib -%}
+{%- set c = namespace() -%}
+{{- lib.message_race_mutex(c, true) -}}
+{%- include "../../../common/babyrace_account.c.j2" -%}

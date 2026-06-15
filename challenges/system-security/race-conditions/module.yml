@@ -1,0 +1,134 @@
+id: race-conditions
+name: Race Conditions
+description: |-
+  Imagine you're in an adrenaline-pumping race against time, where two or more programs are fiercely competing to access or change shared data.
+  This is the thrilling world of race condition exploits! Like daring hackers sliding under closing security gates, these exploits sneak in at just the right millisecond to alter data, causing the system to act in unexpected and often disastrous ways.
+  In this digital race, a split-second can spell the difference between security and breach, creating a high-stakes drama that unfolds in the blink of an eye.
+  By mastering the mechanics of race conditions, you're not just learning to code, you're stepping into a realm where timing is everything, and the prize is the fortification or exploitation of system vulnerabilities.
+  Your code becomes a high-speed racer on the track of system resources, and understanding race conditions is your ticket to the winner's circle!
+resources:
+- name: 'Race Conditions: Introduction'
+  type: lecture
+  video: jXQ8Y5B2sc0
+  playlist: PL-ymxv0nOtqq2SWDP1K1pXCpT6nkmyiXh
+  slides: 1cwaI8mwYBAj_GBrDqfCHM4_ansWHlkT5tBIFo8zJqsI
+- name: 'Race Conditions: Races in the Filesystem'
+  type: lecture
+  video: dpsWLu8jxBg
+  playlist: PL-ymxv0nOtqq2SWDP1K1pXCpT6nkmyiXh
+  slides: 1aMSJoBqDIY0cYwFwEa4uq4mzjScGzZDFbmkvVcrbF-4
+- name: 'Race Conditions: Processes and Threads'
+  type: lecture
+  video: _hDP1wZKkaI
+  playlist: PL-ymxv0nOtqq2SWDP1K1pXCpT6nkmyiXh
+  slides: 11Fq9HwG6yYB9fkEJ-ZJ4kHbu-hL4WizAiUoX9prPN8Y
+- name: 'Race Conditions: Races in Memory'
+  type: lecture
+  video: jNIgU4kI6wY
+  playlist: PL-ymxv0nOtqq2SWDP1K1pXCpT6nkmyiXh
+  slides: 1u-aSz-mqwkMIZEDAR-AEPKw5JPn-1q_3Ek_C6JjQUzY
+- name: 'Race Conditions: Signals and Reentrancy'
+  type: lecture
+  video: bPWQFhsUkbs
+  playlist: PL-ymxv0nOtqq2SWDP1K1pXCpT6nkmyiXh
+  slides: 1LOmzo79U_QmdggdfQwDej47886iqHIPDGXpl506_SYY
+- type: challenge
+  id: level-1-0
+  name: level1.0
+  description: Exploit a basic race condition to get the flag.
+- type: challenge
+  id: level-1-1
+  name: level1.1
+  description: Exploit a basic race condition to get the flag.
+- type: challenge
+  id: level-2-0
+  name: level2.0
+  description: |-
+    Exploit a race condition with a tighter timing window to read the flag.
+    Keep in mind that tighter timing windows in race conditions generally are harder to exploit reliably!
+- type: challenge
+  id: level-2-1
+  name: level2.1
+  description: |-
+    Exploit a race condition with a tighter timing window to read the flag.
+    Keep in mind that tighter timing windows in race conditions generally are harder to exploit reliably!
+- type: challenge
+  id: level-3-0
+  name: level3.0
+  description: Exploit a race condition to corrupt memory, affecting the behavior of the challenge.
+- type: challenge
+  id: level-3-1
+  name: level3.1
+  description: Exploit a race condition to corrupt memory, affecting the behavior of the challenge.
+- type: challenge
+  id: level-4-0
+  name: level4.0
+  description: Exploit a race condition to corrupt memory and smash the stack!
+- type: challenge
+  id: level-4-1
+  name: level4.1
+  description: Exploit a race condition to corrupt memory and smash the stack!
+- type: challenge
+  id: level-5-0
+  name: level5.0
+  description: |-
+    Exploit a complex race condition to read the flag.
+    This race condition involves multiple steps, which makes it less reliable to exploit!
+- type: challenge
+  id: level-5-1
+  name: level5.1
+  description: |-
+    Exploit a complex race condition to read the flag.
+    This race condition involves multiple steps, which makes it less reliable to exploit!
+- type: challenge
+  id: level-6-0
+  name: level6.0
+  description: |-
+    Exploit a complex race condition to read the flag.
+    This race condition involves multiple steps, which makes it less reliable to exploit!
+- type: challenge
+  id: level-6-1
+  name: level6.1
+  description: |-
+    Exploit a complex race condition to read the flag.
+    This race condition involves multiple steps, which makes it less reliable to exploit!
+- type: challenge
+  id: level-7-0
+  name: level7.0
+  description: Exploit a race condition in a more realistic scenario to affect program behavior.
+- type: challenge
+  id: level-7-1
+  name: level7.1
+  description: Exploit a race condition in a more realistic scenario to affect program behavior.
+- type: challenge
+  id: level-8-0
+  name: level8.0
+  description: Utilize multiple connections to the same program to trigger a race condition, affecting program behavior!
+- type: challenge
+  id: level-8-1
+  name: level8.1
+  description: Utilize multiple connections to the same program to trigger a race condition, affecting program behavior!
+- type: challenge
+  id: level-9-0
+  name: level9.0
+  description: Utilize a race condition to leak information out of a program.
+- type: challenge
+  id: level-9-1
+  name: level9.1
+  description: Utilize a race condition to leak information out of a program.
+- type: challenge
+  id: level-10-0
+  name: level10.0
+  description: Utilize a race condition to leak information out of a program, but with additional difficulty, making the race harder!
+- type: challenge
+  id: level-10-1
+  name: level10.1
+  description: Utilize a race condition to leak information out of a program, but with additional difficulty, making the race harder!
+- type: challenge
+  id: level-11-0
+  name: level11.0
+  description: Utilize a race condition to leak information out of a program, but with *even more* additional difficulty, making the race *even* harder!
+- type: challenge
+  id: level-11-1
+  name: level11.1
+  description: Utilize a race condition to leak information out of a program, but with *even more* additional difficulty, making the race *even* harder!
