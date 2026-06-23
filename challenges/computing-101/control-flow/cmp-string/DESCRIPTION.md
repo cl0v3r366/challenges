@@ -18,7 +18,7 @@ jne fail
 ```
 
 Each comparison checks one character of the string.
-Remember from the [Computer Memory](/computing-101/computer-memory) module that `[rax+1]` accesses the byte _one past_ the address in `rax`, `[rax+2]` is two past, and so on.
+Remember from the [Computer Memory](/computing-101/memory) module that `[rax+1]` accesses the byte _one past_ the address in `rax`, `[rax+2]` is two past, and so on.
 Since strings are stored as contiguous bytes in memory, `[rax]` is the first character, `[rax+1]` is the second, `[rax+2]` is the third, etc.
 
 If any character doesn't match, `jne` immediately jumps to `fail` --- the program doesn't bother checking the rest.
